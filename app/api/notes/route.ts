@@ -1,38 +1,38 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/app/utils/supabase/server";
+import { NextResponse } from "next/server"
+import { createClient } from "@/supabase/server"
 
 // GET all notes
 export async function GET() {
-  const supabase = await createClient();
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("notes")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data)
 }
 
 // CREATE note
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = createClient()
 
   // 👇 get logged-in user
   const {
     data: { user },
     error: authError,
-  } = await (await supabase).auth.getUser();
+  } = await (await supabase).auth.getUser()
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const body = await req.json();
-  const { title, content } = body;
+  const body = await req.json()
+  const { title, content } = body
 
   const { data, error } = await (
     await supabase
@@ -46,11 +46,11 @@ export async function POST(req: Request) {
       },
     ])
     .select()
-    .single();
+    .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data)
 }
