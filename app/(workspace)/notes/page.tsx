@@ -1,9 +1,36 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { Plus, Trash2, Search, FileText, Tag } from "lucide-react"
+import {
+  Plus,
+  Trash2,
+  FileText,
+  Tag,
+  LayoutList,
+  AlignJustify,
+  Paperclip,
+  ImageIcon,
+  X,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ZoomIn,
+  File,
+  ExternalLink,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,6 +40,17 @@ type Note = {
   content: string | null
   created_at?: string
   updated_at?: string
+}
+
+type Attachment = {
+  id: string
+  name: string
+  size: number
+  mime_type: string
+  url: string
+  storage_path?: string
+  uploading?: boolean
+  error?: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,6 +76,16 @@ function extractTags(content: string | null): string[] {
 function preview(content: string | null) {
   if (!content) return ""
   return content.replace(/#\w+/g, "").replace(/\s+/g, " ").trim().slice(0, 90)
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function isImage(mimeType: string) {
+  return mimeType?.startsWith("image/")
 }
 
 // ─── Empty State Illustration ─────────────────────────────────────────────────
@@ -184,76 +232,434 @@ function EmptyIllustration() {
   )
 }
 
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+
+function Lightbox({
+  images,
+  startIndex,
+  onClose,
+}: {
+  images: Attachment[]
+  startIndex: number
+  onClose: () => void
+}) {
+  const [idx, setIdx] = useState(startIndex)
+  // "visible" drives the CSS open state; "closing" triggers the exit animation
+  const [visible, setVisible] = useState(false)
+  const [closing, setClosing] = useState(false)
+  // tracks the displayed image so we can cross-fade on switch
+  const [imgKey, setImgKey] = useState(0)
+
+  const current = images[idx]
+
+  // Mount → trigger enter on next tick so transition plays
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  // Animated close: start exit, then unmount after transition completes
+  const handleClose = useCallback(() => {
+    setClosing(true)
+    setVisible(false)
+    setTimeout(onClose, 280) // matches transition duration below
+  }, [onClose])
+
+  const prev = useCallback(() => {
+    setIdx((i) => (i - 1 + images.length) % images.length)
+    setImgKey((k) => k + 1)
+  }, [images.length])
+
+  const next = useCallback(() => {
+    setIdx((i) => (i + 1) % images.length)
+    setImgKey((k) => k + 1)
+  }, [images.length])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose()
+      if (e.key === "ArrowLeft") prev()
+      if (e.key === "ArrowRight") next()
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [handleClose, prev, next])
+
+  if (!current) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        // Backdrop: fade in/out
+        backgroundColor: `rgba(0,0,0,${visible && !closing ? 0.8 : 0})`,
+        backdropFilter: `blur(${visible && !closing ? 6 : 0}px)`,
+        transition: "background-color 280ms ease, backdrop-filter 280ms ease",
+      }}
+      onClick={handleClose}
+    >
+      <div
+        className="relative flex max-h-[90vh] max-w-[90vw] flex-col overflow-hidden rounded-2xl bg-card shadow-2xl"
+        style={{
+          // Card: scale + fade in/out
+          opacity: visible && !closing ? 1 : 0,
+          transform: `scale(${visible && !closing ? 1 : 0.94})`,
+          transition:
+            "opacity 260ms cubic-bezier(0.16,1,0.3,1), transform 260ms cubic-bezier(0.16,1,0.3,1)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top bar */}
+        <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">
+              {current.name}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {formatBytes(current.size)}
+            </p>
+          </div>
+          <div className="ml-4 flex shrink-0 items-center gap-1.5">
+            <a
+              href={current.url}
+              download={current.name}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+              aria-label="Download"
+            >
+              <Download className="h-4 w-4" />
+            </a>
+            <button
+              onClick={handleClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Image — keyed so it re-mounts and cross-fades on switch */}
+        <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/20 p-4">
+          <img
+            key={imgKey}
+            src={current.url}
+            alt={current.name}
+            className="max-h-[70vh] max-w-full rounded-lg object-contain shadow-md"
+            style={{
+              animation:
+                "lightbox-img-in 220ms cubic-bezier(0.16,1,0.3,1) both",
+            }}
+          />
+        </div>
+
+        {/* Nav (only if multiple) */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute top-1/2 left-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60 active:scale-90"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute top-1/2 right-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60 active:scale-90"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            {/* Dot indicators */}
+            <div className="flex items-center justify-center gap-1.5 py-3">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setIdx(i)
+                    setImgKey((k) => k + 1)
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-200 ${
+                    i === idx
+                      ? "w-4 bg-primary"
+                      : "w-1.5 bg-muted-foreground/30"
+                  }`}
+                  aria-label={`Go to image ${i + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Keyframe for image cross-fade */}
+      <style>{`
+        @keyframes lightbox-img-in {
+          from { opacity: 0; transform: scale(0.97); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── Image Gallery ────────────────────────────────────────────────────────────
+
+function ImageGallery({
+  images,
+  onRemove,
+  onOpenLightbox,
+}: {
+  images: Attachment[]
+  onRemove: (id: string) => void
+  onOpenLightbox: (index: number) => void
+}) {
+  if (images.length === 0) return null
+
+  return (
+    <div className="mt-4">
+      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium tracking-widest text-muted-foreground/60 uppercase">
+        <ImageIcon className="h-3 w-3" />
+        Images
+      </p>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {images.map((img, i) => (
+          <div
+            key={img.id}
+            className="group relative aspect-square overflow-hidden rounded-xl border border-border/60"
+            style={{
+              // Staggered fade-up entrance for each thumbnail
+              animation:
+                "gallery-thumb-in 320ms cubic-bezier(0.16,1,0.3,1) both",
+              animationDelay: `${i * 55}ms`,
+            }}
+          >
+            {img.uploading ? (
+              <div className="flex h-full w-full items-center justify-center bg-muted/60">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : img.error ? (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-destructive/5 text-destructive">
+                <X className="h-4 w-4" />
+                <span className="text-[10px]">Failed</span>
+              </div>
+            ) : (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={img.name}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                {/* Hover overlay */}
+                <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100">
+                  <button
+                    onClick={() => onOpenLightbox(i)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all hover:bg-white/30 active:scale-90"
+                    aria-label="View full size"
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => onRemove(img.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all hover:bg-red-500/70 active:scale-90"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Keyframe for gallery thumbnail entrance */}
+      <style>{`
+        @keyframes gallery-thumb-in {
+          from { opacity: 0; transform: translateY(10px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── File Chip ────────────────────────────────────────────────────────────────
+
+function FileChip({
+  attachment,
+  onRemove,
+}: {
+  attachment: Attachment
+  onRemove: () => void
+}) {
+  const inner = (
+    <div
+      className={`group relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs transition-all duration-150 ${
+        attachment.error
+          ? "border-destructive/40 bg-destructive/5 text-destructive"
+          : "border-border/60 bg-muted/40 text-foreground hover:bg-muted/70"
+      }`}
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/40 bg-muted">
+        {attachment.uploading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+        ) : (
+          <File className="h-3.5 w-3.5 text-muted-foreground" />
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="max-w-[140px] truncate leading-tight font-medium">
+          {attachment.name}
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {attachment.uploading
+            ? "Uploading…"
+            : attachment.error
+              ? "Upload failed"
+              : formatBytes(attachment.size)}
+        </p>
+      </div>
+
+      {!attachment.uploading && !attachment.error && (
+        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+      )}
+
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onRemove()
+        }}
+        className="ml-1 rounded-md p-0.5 text-muted-foreground opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+        aria-label={`Remove ${attachment.name}`}
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  )
+
+  if (!attachment.uploading && !attachment.error && attachment.url) {
+    return (
+      <a
+        href={attachment.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
+        {inner}
+      </a>
+    )
+  }
+
+  return inner
+}
+
 // ─── Note Card ────────────────────────────────────────────────────────────────
 
 interface NoteCardProps {
   note: Note
   active: boolean
+  compact: boolean
   onClick: () => void
   onDelete: (e: React.MouseEvent) => void
 }
 
-function NoteCard({ note, active, onClick, onDelete }: NoteCardProps) {
+function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
   const tags = extractTags(note.content)
 
   return (
     <button
       onClick={onClick}
-      className={`group w-full rounded-2xl px-4 py-3.5 text-left transition-all duration-200 ease-out ${
+      className={`group w-full rounded-2xl px-4 text-left transition-all duration-200 ease-out ${compact ? "py-2" : "py-3.5"} ${
         active
           ? "bg-primary text-primary-foreground shadow-md"
           : "border border-border/60 bg-card hover:bg-muted/40"
-      } `}
+      }`}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <p
           className={`line-clamp-1 text-sm leading-snug font-semibold ${active ? "text-primary-foreground" : "text-foreground"}`}
         >
           {note.title || "Untitled"}
         </p>
-        <button
-          onClick={onDelete}
-          className={`-mt-0.5 shrink-0 rounded-lg p-1 opacity-0 transition-all duration-150 group-hover:opacity-100 ${
-            active
-              ? "text-primary-foreground/70 hover:bg-primary-foreground/20"
-              : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          } `}
-          aria-label="Delete note"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {tags.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {tags.map((tag) => (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {compact && (
             <span
-              key={tag}
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide ${
-                active
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : "bg-primary/10 text-primary"
-              }`}
+              className={`text-[10px] font-medium ${active ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}
             >
-              {tag}
+              {timeAgo(note.updated_at ?? note.created_at)}
             </span>
-          ))}
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className={`rounded-lg bg-transparent p-1 opacity-0 transition-all duration-150 group-hover:opacity-100 ${
+                  active
+                    ? "text-primary-foreground/70"
+                    : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                }`}
+                aria-label="Delete note"
+                size="sm"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your note and all its attachments.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onDelete}
+                  className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-      )}
-
-      <p
-        className={`mt-1.5 line-clamp-2 text-xs leading-relaxed ${active ? "text-primary-foreground/75" : "text-muted-foreground"}`}
-      >
-        {preview(note.content)}
-      </p>
-
-      <div className="mt-2">
-        <span
-          className={`text-[10px] font-medium ${active ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}
-        >
-          {timeAgo(note.updated_at ?? note.created_at)}
-        </span>
       </div>
+
+      {!compact && (
+        <>
+          {tags.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide ${active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/10 text-primary"}`}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+          <p
+            className={`mt-1.5 line-clamp-2 text-xs leading-relaxed ${active ? "text-primary-foreground/75" : "text-muted-foreground"}`}
+          >
+            {preview(note.content)}
+          </p>
+          <div className="mt-2">
+            <span
+              className={`text-[10px] font-medium ${active ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}
+            >
+              {timeAgo(note.updated_at ?? note.created_at)}
+            </span>
+          </div>
+        </>
+      )}
     </button>
   )
 }
@@ -269,7 +675,119 @@ export default function Page() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [compact, setCompact] = useState(false)
 
+  // ── Attachments ────────────────────────────────────────────────────────────
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Lightbox ───────────────────────────────────────────────────────────────
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  const imageAttachments = attachments.filter(
+    (a) => isImage(a.mime_type) && !a.error
+  )
+  const fileAttachments = attachments.filter((a) => !isImage(a.mime_type))
+
+  // ── Fetch attachments for a note (rehydrates on note switch / page refresh)
+  const fetchAttachments = useCallback(async (noteId: string) => {
+    setAttachmentsLoading(true)
+    try {
+      const res = await fetch(`/api/notes/${noteId}/attachments`)
+      if (res.ok) {
+        const data = await res.json()
+        setAttachments(Array.isArray(data) ? data : [])
+      }
+    } catch {
+      // Non-critical — show empty state silently
+    } finally {
+      setAttachmentsLoading(false)
+    }
+  }, [])
+
+  // ── Upload handler ─────────────────────────────────────────────────────────
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length || !selectedNote) return
+
+    for (const file of files) {
+      const tempId = crypto.randomUUID()
+      const objectUrl = URL.createObjectURL(file)
+
+      // Optimistic chip
+      setAttachments((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          name: file.name,
+          size: file.size,
+          mime_type: file.type,
+          url: objectUrl,
+          uploading: true,
+        },
+      ])
+
+      const form = new FormData()
+      form.append("file", file)
+
+      try {
+        const res = await fetch(`/api/notes/${selectedNote.id}/attachments`, {
+          method: "POST",
+          body: form,
+        })
+
+        if (res.ok) {
+          const saved = await res.json()
+          setAttachments((prev) =>
+            prev.map((a) =>
+              a.id === tempId
+                ? { ...saved, url: saved.url ?? objectUrl, uploading: false }
+                : a
+            )
+          )
+        } else {
+          setAttachments((prev) =>
+            prev.map((a) =>
+              a.id === tempId ? { ...a, uploading: false, error: true } : a
+            )
+          )
+        }
+      } catch {
+        setAttachments((prev) =>
+          prev.map((a) =>
+            a.id === tempId ? { ...a, uploading: false, error: true } : a
+          )
+        )
+      }
+    }
+
+    e.target.value = ""
+  }
+
+  // ── Remove attachment (optimistic + API) ───────────────────────────────────
+  const removeAttachment = async (id: string) => {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === id)
+      if (target?.url.startsWith("blob:")) URL.revokeObjectURL(target.url)
+      return prev.filter((a) => a.id !== id)
+    })
+
+    if (selectedNote) {
+      try {
+        await fetch(
+          `/api/notes/${selectedNote.id}/attachments?attachmentId=${id}`,
+          {
+            method: "DELETE",
+          }
+        )
+      } catch {
+        // Best effort
+      }
+    }
+  }
+
+  // ── Notes CRUD ─────────────────────────────────────────────────────────────
   const fetchNotes = useCallback(async () => {
     const res = await fetch("/api/notes")
     if (res.ok) {
@@ -301,6 +819,7 @@ export default function Page() {
         setSelectedNote(newNote)
         setTitle(newNote.title ?? "")
         setContent(newNote.content ?? "")
+        setAttachments([])
       }
     }
   }
@@ -338,14 +857,18 @@ export default function Page() {
       setSelectedNote(null)
       setTitle("")
       setContent("")
+      setAttachments([])
     }
     fetchNotes()
   }
 
+  // Fetch attachments whenever we switch notes
   const selectNote = (note: Note) => {
     setSelectedNote(note)
     setTitle(note.title)
     setContent(note.content ?? "")
+    setAttachments([])
+    fetchAttachments(note.id)
   }
 
   const filtered = notes.filter((n) => {
@@ -357,173 +880,299 @@ export default function Page() {
   })
 
   const currentTags = extractTags(content)
+  const uploadedCount = attachments.filter(
+    (a) => !a.error && !a.uploading
+  ).length
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* ── Left panel ─────────────────────────────────────────────── */}
-      <aside className="flex h-screen w-72 shrink-0 flex-col border-r border-border/60 bg-muted/30">
-        <div className="flex items-center justify-between px-5 pt-6 pb-3">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            Notes
-          </h1>
+    <>
+      {/* Lightbox portal */}
+      {lightboxIndex !== null && imageAttachments.length > 0 && (
+        <Lightbox
+          images={imageAttachments}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
 
-          <Button
-            onClick={createNote}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-all duration-150 ease-out hover:opacity-90 hover:shadow-md active:scale-95"
-            aria-label="New note"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-          </Button>
-        </div>
-
-        <div className="px-4 pb-3">
-          <div className="my-5 flex items-center gap-2 rounded-xl shadow-sm">
-            <Search className="h-3.5 w-3.5 text-muted-foreground" />
-
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search notes…"
-              className="flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/60"
-            />
-          </div>
-        </div>
-
-        {/* Scrollable area */}
-        <div className="min-h-0 flex-1">
-          <div className="h-full space-y-2 overflow-y-auto px-3 pb-4">
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-24 animate-pulse rounded-2xl bg-muted/60"
-                  style={{ animationDelay: `${i * 80}ms` }}
-                />
-              ))
-            ) : filtered.length === 0 ? (
-              <p className="pt-8 text-center text-xs text-muted-foreground">
-                {search
-                  ? "No notes match your search."
-                  : "No notes yet — create one!"}
-              </p>
-            ) : (
-              filtered.map((note, i) => (
-                <div
-                  key={note.id}
-                  className="animate-in fade-in slide-in-from-bottom-1"
-                  style={{
-                    animationDelay: `${i * 40}ms`,
-                    animationDuration: "250ms",
-                    animationFillMode: "both",
-                  }}
-                >
-                  <NoteCard
-                    note={note}
-                    active={selectedNote?.id === note.id}
-                    onClick={() => selectNote(note)}
-                    onDelete={(e) => {
-                      e.stopPropagation()
-                      deleteNote(note.id)
-                    }}
-                  />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </aside>
-      {/* ── Right panel ────────────────────────────────────────────── */}
-      <main className="flex flex-1 flex-col overflow-hidden bg-card">
-        {selectedNote ? (
-          <>
-            <div className="flex items-center justify-between border-b border-border/60 px-8 py-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  {timeAgo(selectedNote.updated_at ?? selectedNote.created_at)}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                {saving && (
-                  <span className="animate-pulse text-xs text-muted-foreground">
-                    Saving…
-                  </span>
+      <div className="flex h-screen overflow-hidden">
+        {/* ── Left panel ─────────────────────────────────────────────── */}
+        <aside className="flex h-screen w-72 shrink-0 flex-col border-r border-border/60 bg-muted/30">
+          <div className="flex items-center justify-between px-5 pt-6 pb-3">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+              Notes
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCompact((v) => !v)}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-card text-muted-foreground transition-all duration-150 ease-out hover:bg-muted hover:text-foreground active:scale-95"
+                aria-label={
+                  compact ? "Switch to list view" : "Switch to compact view"
+                }
+              >
+                {compact ? (
+                  <AlignJustify className="h-3.5 w-3.5" />
+                ) : (
+                  <LayoutList className="h-3.5 w-3.5" />
                 )}
-                <button
-                  onClick={() => deleteNote(selectedNote.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Delete
-                </button>
-              </div>
+              </button>
+              <button
+                onClick={createNote}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-all duration-150 ease-out hover:opacity-90 hover:shadow-md active:scale-95"
+                aria-label="New note"
+              >
+                <Plus className="h-4 w-4" strokeWidth={2.5} />
+              </button>
             </div>
-
-            <div className="px-10 pt-8">
-              <input
-                value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="Note title"
-                className="w-full bg-transparent text-3xl font-semibold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/40"
-              />
-            </div>
-
-            {currentTags.length > 0 && (
-              <div className="flex items-center gap-2 px-10 pt-3">
-                <Tag className="h-3 w-3 text-muted-foreground" />
-                {currentTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="mx-10 mt-5 border-t border-border/60" />
-
-            <div className="flex-1 overflow-y-auto px-10 py-5">
-              <textarea
-                value={content}
-                onChange={(e) => handleContentChange(e.target.value)}
-                placeholder={`Start writing…\n\nTip: use #tags to categorize your notes.`}
-                className="h-full min-h-[400px] w-full resize-none bg-transparent text-[15px] leading-[1.85] text-foreground outline-none placeholder:text-muted-foreground/40"
-              />
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
-            <EmptyIllustration />
-            <div>
-              <p className="text-xl font-semibold text-foreground">
-                Write down your ideas
-              </p>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Select a note from the list, or create a new one.
-              </p>
-              <div className="mt-3 flex items-center justify-center gap-2">
-                {["#ideas", "#to-do's", "#morning"].map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <Button
-              onClick={createNote}
-              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 ease-out hover:opacity-90 hover:shadow-md active:scale-95"
-            >
-              <Plus className="h-4 w-4" />
-              New note
-            </Button>
           </div>
-        )}
-      </main>
-    </div>
+
+          <div className="min-h-0 flex-1">
+            <div className="h-full space-y-2 overflow-y-auto px-3 pb-4">
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-24 animate-pulse rounded-2xl bg-muted/60"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  />
+                ))
+              ) : filtered.length === 0 ? (
+                <p className="pt-8 text-center text-xs text-muted-foreground">
+                  {search
+                    ? "No notes match your search."
+                    : "No notes yet — create one!"}
+                </p>
+              ) : (
+                filtered.map((note, i) => (
+                  <div
+                    key={note.id}
+                    className="animate-in fade-in slide-in-from-bottom-1"
+                    style={{
+                      animationDelay: `${i * 40}ms`,
+                      animationDuration: "250ms",
+                      animationFillMode: "both",
+                    }}
+                  >
+                    <NoteCard
+                      note={note}
+                      active={selectedNote?.id === note.id}
+                      compact={compact}
+                      onClick={() => selectNote(note)}
+                      onDelete={(e) => {
+                        e.stopPropagation()
+                        deleteNote(note.id)
+                      }}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* ── Right panel ────────────────────────────────────────────── */}
+        <main className="flex flex-1 flex-col overflow-hidden bg-card">
+          {selectedNote ? (
+            <>
+              {/* Header */}
+              <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-8 py-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {timeAgo(
+                      selectedNote.updated_at ?? selectedNote.created_at
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {saving && (
+                    <span className="animate-pulse text-xs text-muted-foreground">
+                      Saving…
+                    </span>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete your note and all its attachments.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteNote(selectedNote.id)}
+                          className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="flex flex-1 flex-col overflow-y-auto px-10 py-6">
+                {/* Title */}
+                <input
+                  value={title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  placeholder="Note title"
+                  className="w-full bg-transparent text-3xl font-semibold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/40"
+                />
+
+                {/* Tags */}
+                {currentTags.length > 0 && (
+                  <div className="flex items-center gap-2 pt-3">
+                    <Tag className="h-3 w-3 text-muted-foreground" />
+                    {currentTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-5 border-t border-border/60" />
+
+                {/* Textarea */}
+                <textarea
+                  value={content}
+                  onChange={(e) => handleContentChange(e.target.value)}
+                  placeholder={`Start writing…\n\nTip: use #tags to categorize your notes.`}
+                  className="mt-5 min-h-[180px] w-full resize-none bg-transparent text-[15px] leading-[1.85] text-foreground outline-none placeholder:text-muted-foreground/40"
+                />
+
+                {/* ── Attachments loading skeleton ── */}
+                {attachmentsLoading && (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading attachments…
+                  </div>
+                )}
+
+                {/* ── Image gallery ── */}
+                {!attachmentsLoading && (
+                  <ImageGallery
+                    images={imageAttachments}
+                    onRemove={removeAttachment}
+                    onOpenLightbox={(i) => setLightboxIndex(i)}
+                  />
+                )}
+
+                {/* ── File chips ── */}
+                {!attachmentsLoading && fileAttachments.length > 0 && (
+                  <div className="mt-4">
+                    <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium tracking-widest text-muted-foreground/60 uppercase">
+                      <Paperclip className="h-3 w-3" />
+                      Files
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {fileAttachments.map((att) => (
+                        <FileChip
+                          key={att.id}
+                          attachment={att}
+                          onRemove={() => removeAttachment(att.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Bottom toolbar ── */}
+                <div className="mt-6 flex items-center gap-1 border-t border-border/40 pt-3">
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+
+                  <button
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.accept = ""
+                        fileInputRef.current.click()
+                      }
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground active:scale-95"
+                  >
+                    <Paperclip className="h-3.5 w-3.5" />
+                    Attach
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.accept = "image/*"
+                        fileInputRef.current.click()
+                        setTimeout(() => {
+                          if (fileInputRef.current)
+                            fileInputRef.current.accept = ""
+                        }, 500)
+                      }
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground active:scale-95"
+                  >
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    Image
+                  </button>
+
+                  {uploadedCount > 0 && (
+                    <span className="ml-auto text-[10px] text-muted-foreground/50">
+                      {uploadedCount} attachment{uploadedCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
+              <EmptyIllustration />
+              <div>
+                <p className="text-xl font-semibold text-foreground">
+                  Write down your ideas
+                </p>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Select a note from the list, or create a new one.
+                </p>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  {["#ideas", "#to-do's", "#morning"].map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <Button
+                onClick={createNote}
+                className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 ease-out hover:opacity-90 hover:shadow-md active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                New note
+              </Button>
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   )
 }
