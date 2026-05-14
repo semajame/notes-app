@@ -971,7 +971,7 @@ export default function Page() {
         </aside>
 
         {/* ── Right panel ────────────────────────────────────────────── */}
-        <main className="flex flex-1 flex-col overflow-hidden bg-card">
+        <main className="flex flex-1 flex-col overflow-hidden rounded-r-2xl bg-card">
           {selectedNote ? (
             <>
               {/* Header */}

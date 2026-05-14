@@ -4,14 +4,15 @@ import { createClient } from "@/supabase/server"
 // GET single note
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
+  const id = await params.then((p) => p.id)
 
   const { data, error } = await supabase
     .from("notes")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (error) {

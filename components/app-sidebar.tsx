@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { createClient } from "@/supabase/client"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
+
 import {
   Sidebar,
   SidebarContent,
@@ -15,127 +15,57 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import {
-  TerminalSquareIcon,
-  BotIcon,
-  BookOpenIcon,
-  Settings2Icon,
-  LifeBuoyIcon,
-  SendIcon,
-  FrameIcon,
-  PieChartIcon,
-  MapIcon,
-  TerminalIcon,
-} from "lucide-react"
+
+import { TerminalSquareIcon, BookOpenIcon, TerminalIcon } from "lucide-react"
+
+const supabase = createClient()
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: <BookOpenIcon />,
       isActive: true,
-      // items: [
-      //   {
-      //     title: "History",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Starred",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Settings",
-      //     url: "#",
-      //   },
-      // ],
     },
     {
       title: "Notes",
       url: "/notes",
       icon: <TerminalSquareIcon />,
-      isActive: true,
-      // items: [
-      //   {
-      //     title: "History",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Starred",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Settings",
-      //     url: "#",
-      //   },
-      // ],
     },
-    // {
-    //   title: "Folders",
-    //   url: "/files",
-    //   icon: <BotIcon />,
-    //   // items: [
-    //   //   {
-    //   //     title: "Genesis",
-    //   //     url: "#",
-    //   //   },
-    //   //   {
-    //   //     title: "Explorer",
-    //   //     url: "#",
-    //   //   },
-    //   //   {
-    //   //     title: "Quantum",
-    //   //     url: "#",
-    //   //   },
-    //   // ],
-    // },
   ],
-  // navSecondary: [
-  //   {
-  //     title: "Support",
-  //     url: "#",
-  //     icon: <LifeBuoyIcon />,
-  //   },
-  //   {
-  //     title: "Feedback",
-  //     url: "#",
-  //     icon: <SendIcon />,
-  //   },
-  // ],
-  // projects: [
-  //   // {
-  //   //   name: "Design Engineering",
-  //   //   url: "#",
-  //   //   icon: (
-  //   //     <FrameIcon
-  //   //     />
-  //   //   ),
-  //   // },
-  //   // {
-  //   //   name: "Sales & Marketing",
-  //   //   url: "#",
-  //   //   icon: (
-  //   //     <PieChartIcon
-  //   //     />
-  //   //   ),
-  //   // },
-  //   // {
-  //   //   name: "Travel",
-  //   //   url: "#",
-  //   //   icon: (
-  //   //     <MapIcon
-  //   //     />
-  //   //   ),
-  //   // },
-  // ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState({
+    name: "",
+    email: "",
+    avatar: "",
+  })
+
+  React.useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        setUser({
+          name:
+            user.user_metadata?.full_name ||
+            user.email?.split("@")[0] ||
+            "User",
+
+          email: user.email || "",
+
+          avatar: user.user_metadata?.avatar_url || "/avatars/default.jpg",
+        })
+      }
+    }
+
+    getUser()
+  }, [])
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -146,8 +76,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <TerminalIcon className="size-4" />
                 </div>
+
                 <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-medium">Acme Inc</span>
+
                   <span className="truncate text-xs">Enterprise</span>
                 </div>
               </a>
@@ -155,13 +87,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
-        {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
+
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )
