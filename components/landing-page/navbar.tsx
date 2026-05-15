@@ -1,66 +1,63 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react"
+import Link from "next/link"
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 md:px-12 py-5 transition-all duration-300 ${
-        scrolled
-          ? "bg-[#0d0f14]/80 backdrop-blur-lg border-b border-white/5"
-          : "bg-transparent"
-      }`}
-    >
-      {/* Logo */}
-      <Link
-        href="/"
-        className="font-serif-display text-2xl text-[var(--text)] tracking-tight"
-      >
-        Note<span className="text-[var(--amber)]">vo</span>
-      </Link>
-
-      {/* Nav links */}
-      <ul className="hidden md:flex gap-9 list-none">
-        {[
-          { label: "Features", href: "#features" },
-          { label: "How it works", href: "#how" },
-          { label: "Reviews", href: "#testimonials" },
-        ].map((link) => (
-          <li key={link.href}>
-            <a
-              href={link.href}
-              className="text-[var(--muted)] text-sm font-medium hover:text-[var(--text)] transition-colors duration-200"
-            >
-              {link.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-
-      {/* CTA buttons */}
-      <div className="flex items-center gap-3">
+    <nav className="fixed top-0 right-0 left-0 z-50 border-b border-[#E8E6DF] bg-[#FAFAF8]/90 backdrop-blur-sm">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        {/* Logo */}
         <Link
-          href="/login"
-          className="hidden sm:inline-flex border border-white/10 text-[var(--text)] text-sm px-5 py-2 rounded-lg hover:border-white/25 hover:text-white transition-all duration-200"
+          href="/"
+          className="flex items-center gap-2 text-[15px] font-semibold text-[#1a1a1a]"
         >
-          Sign in
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect width="20" height="20" rx="5" fill="#1a1a1a" />
+            <rect x="4" y="5" width="8" height="1.5" rx="0.75" fill="white" />
+            <rect x="4" y="9" width="12" height="1.5" rx="0.75" fill="white" />
+            <rect x="4" y="13" width="6" height="1.5" rx="0.75" fill="white" />
+          </svg>
+          Notely
         </Link>
-        <Link
-          href="/register"
-          className="bg-[var(--amber)] text-[#0d0f14] text-sm font-semibold px-5 py-2 rounded-lg hover:bg-[#f9bc55] hover:-translate-y-px transition-all duration-200"
-        >
-          Get started free
-        </Link>
+
+        {/* Center nav */}
+        <div className="hidden items-center gap-6 text-sm font-medium text-[#555] md:flex">
+          <Link
+            href="#features"
+            className="transition-colors hover:text-[#1a1a1a]"
+          >
+            Features
+          </Link>
+          <Link
+            href="#how-it-works"
+            className="transition-colors hover:text-[#1a1a1a]"
+          >
+            How it Works
+          </Link>
+          <Link href="#" className="transition-colors hover:text-[#1a1a1a]">
+            Pricing
+          </Link>
+        </div>
+
+        {/* CTA */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="hidden text-sm font-medium text-[#1a1a1a] transition-opacity hover:opacity-70 md:block"
+          >
+            Log In
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-full bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#333]"
+          >
+            Get Started
+          </Link>
+        </div>
       </div>
     </nav>
-  );
+  )
 }
