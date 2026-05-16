@@ -1,3 +1,5 @@
+"use client"
+
 const testimonials = [
   {
     name: "Maria Santos",
@@ -44,42 +46,116 @@ const testimonials = [
 ]
 
 export default function Testimonials() {
-  return (
-    <section className="bg-[#FAFAF8] py-20">
-      <div className="mx-auto max-w-5xl px-6">
-        <h2 className="mb-3 text-center text-[32px] font-bold text-[#1a1a1a]">
-          Loved by note-takers everywhere.
-        </h2>
-        <p className="mb-12 text-center text-[15px] text-[#777]">
-          Join thousands of people who've made Notely their second brain.
-        </p>
+  const reversedTestimonials = [...testimonials].reverse()
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {testimonials.map((t) => (
-            <div
-              key={t.handle}
-              className="flex flex-col gap-3 rounded-2xl border border-[#E8E6DF] bg-white p-5 transition-colors hover:border-[#C8C4BC]"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`h-9 w-9 ${t.color} flex items-center justify-center rounded-full text-xs font-bold text-white`}
+  return (
+    <section className="overflow-hidden bg-[#FAFAF8] py-20">
+      <div className="w-full px-6">
+        <div className="mx-auto max-w-7xl text-center">
+          <h2 className="mb-3 text-[32px] font-bold text-[#1a1a1a]">
+            Loved by note-takers everywhere.
+          </h2>
+          <p className="mb-12 text-[15px] text-[#777]">
+            Join thousands of people who've made Notely their second brain.
+          </p>
+        </div>
+
+        <div>
+          <div className="relative w-full overflow-hidden py-6">
+            <div className="scroll-track animate-scroll flex gap-4 px-6">
+              {[...testimonials, ...testimonials].map((t, index) => (
+                <article
+                  key={`${t.handle}-${index}`}
+                  className="max-w-[320px] min-w-[320px] flex-shrink-0 rounded-3xl bg-white p-5"
                 >
-                  {t.avatar}
-                </div>
-                <div>
-                  <p className="text-[13px] leading-none font-semibold text-[#1a1a1a]">
-                    {t.name}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-9 w-9 ${t.color} flex items-center justify-center rounded-full text-xs font-bold text-white`}
+                    >
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <p className="text-[13px] leading-none font-semibold text-[#1a1a1a]">
+                        {t.name}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[#999]">
+                        {t.handle}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-[13px] leading-relaxed text-[#555]">
+                    "{t.text}"
                   </p>
-                  <p className="mt-0.5 text-[11px] text-[#999]">{t.handle}</p>
-                </div>
-              </div>
-              <p className="text-[13px] leading-relaxed text-[#555]">
-                "{t.text}"
-              </p>
+                </article>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="relative w-full overflow-hidden rounded-[28px] bg-white/8 py-6">
+            <div className="scroll-track animate-scroll-reverse flex gap-4 px-6">
+              {[...reversedTestimonials, ...reversedTestimonials].map(
+                (t, index) => (
+                  <article
+                    key={`${t.handle}-reverse-${index}`}
+                    className="max-w-[320px] min-w-[320px] flex-shrink-0 rounded-3xl bg-white p-5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-9 w-9 ${t.color} flex items-center justify-center rounded-full text-xs font-bold text-white`}
+                      >
+                        {t.avatar}
+                      </div>
+                      <div>
+                        <p className="text-[13px] leading-none font-semibold text-[#1a1a1a]">
+                          {t.name}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-[#999]">
+                          {t.handle}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-[13px] leading-relaxed text-[#555]">
+                      "{t.text}"
+                    </p>
+                  </article>
+                )
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .scroll-track {
+          min-width: 200%;
+        }
+
+        .animate-scroll {
+          animation: scroll 30s linear infinite;
+        }
+
+        .animate-scroll-reverse {
+          animation: scrollReverse 30s linear infinite;
+        }
+
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+
+        @keyframes scrollReverse {
+          0% {
+            transform: translateX(-50%);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </section>
   )
 }

@@ -73,8 +73,6 @@ function groupByMonth(items: { created_at: string }[]) {
     const key = `${d.getFullYear()}-${d.getMonth()}`
     counts[key] = (counts[key] ?? 0) + 1
   })
-
-  // Build last 6 months
   const now = new Date()
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
@@ -149,31 +147,61 @@ interface StatCardProps {
   sub?: string
   positive?: boolean | null
   icon: React.ReactNode
+  accent: string
+  accentBg: string
 }
 
-function StatCard({ label, value, sub, positive, icon }: StatCardProps) {
+function StatCard({
+  label,
+  value,
+  sub,
+  positive,
+  icon,
+  accent,
+  accentBg,
+}: StatCardProps) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card px-5 py-4 shadow-sm transition-shadow duration-200 ease-out hover:shadow-md">
-      {/* subtle gradient overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-transparent to-muted/20" />
+    <div
+      className="group relative overflow-hidden rounded-2xl px-5 py-4 transition-shadow duration-200 ease-out hover:shadow-md"
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E8E6DF",
+        boxShadow: "0 1px 3px rgba(26,26,26,0.06)",
+      }}
+    >
+      {/* subtle tint overlay */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "linear-gradient(135deg, transparent 60%, #F4F2EC44)",
+        }}
+      />
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: "#999" }}
+          >
             {label}
           </p>
-          <p className="mt-1.5 truncate text-2xl font-semibold tracking-tight text-foreground">
+          <p
+            className="mt-1.5 truncate text-2xl font-semibold tracking-tight"
+            style={{ color: "#1a1a1a" }}
+          >
             {value}
           </p>
           {sub && (
             <p
-              className={`mt-1 flex items-center gap-1 text-xs font-medium ${
-                positive === true
-                  ? "text-emerald-500"
-                  : positive === false
-                    ? "text-rose-500"
-                    : "text-muted-foreground"
-              }`}
+              className="mt-1 flex items-center gap-1 text-xs font-medium"
+              style={{
+                color:
+                  positive === true
+                    ? "#4CAF72"
+                    : positive === false
+                      ? "#FF6B6B"
+                      : "#888",
+              }}
             >
               {positive === true && <TrendingUp className="h-3 w-3" />}
               {positive === false && <TrendingDown className="h-3 w-3" />}
@@ -181,7 +209,10 @@ function StatCard({ label, value, sub, positive, icon }: StatCardProps) {
             </p>
           )}
         </div>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-150 group-hover:bg-primary/15">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-150"
+          style={{ background: accentBg, color: accent }}
+        >
           {icon}
         </div>
       </div>
@@ -189,12 +220,16 @@ function StatCard({ label, value, sub, positive, icon }: StatCardProps) {
   )
 }
 
-interface ErrorBannerProps {
-  message: string
-}
-function ErrorBanner({ message }: ErrorBannerProps) {
+function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400">
+    <div
+      className="rounded-xl px-4 py-3 text-sm"
+      style={{
+        background: "#FFF0F0",
+        border: "1px solid #FF6B6B44",
+        color: "#FF6060",
+      }}
+    >
       ⚠ {message}
     </div>
   )
@@ -206,14 +241,28 @@ function ErrorBanner({ message }: ErrorBannerProps) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-lg">
-      <p className="font-medium text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-foreground">
+    <div
+      className="rounded-lg px-3 py-2 text-xs"
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E8E6DF",
+        boxShadow: "0 4px 12px rgba(26,26,26,0.10)",
+        color: "#1a1a1a",
+      }}
+    >
+      <p style={{ color: "#888" }} className="font-medium">
+        {label}
+      </p>
+      <p className="mt-0.5 font-semibold" style={{ color: "#1a1a1a" }}>
         {payload[0].value} {payload[0].name}
       </p>
     </div>
   )
 }
+
+// ─── Shared chart axis style ──────────────────────────────────────────────────
+
+const axisTickStyle = { fontSize: 11, fill: "#999" }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -249,13 +298,11 @@ export function DashboardClient({
     [files]
   )
 
-  // Week-over-week change for notes (this week vs previous)
   const notesThisWeek = useMemo(() => createdThisWeek(notes), [notes])
   const notesToday = useMemo(() => createdToday(notes), [notes])
   const filesToday = useMemo(() => createdToday(files), [files])
   const storage = useMemo(() => totalSize(files), [files])
 
-  // Last updated timestamps
   const lastNoteTime = useMemo(() => {
     if (!notes.length) return null
     return notes.reduce((latest, n) =>
@@ -276,47 +323,63 @@ export function DashboardClient({
     )
   }, [files])
 
+  // Stat card accent colors from the landing palette
+  const statCards = [
+    {
+      label: "Total Notes",
+      value: notes.length.toLocaleString(),
+      sub: `${notesToday} created today`,
+      positive: notesToday > 0 ? true : null,
+      icon: <FileText className="h-5 w-5" />,
+      accent: "#5B9FE8",
+      accentBg: "#5B9FE820",
+    },
+    {
+      label: "Total Files",
+      value: files.length.toLocaleString(),
+      sub: `${filesToday} uploaded today`,
+      positive: filesToday > 0 ? true : null,
+      icon: <FolderOpen className="h-5 w-5" />,
+      accent: "#4CAF72",
+      accentBg: "#4CAF7220",
+    },
+    {
+      label: "This Week",
+      value: notesThisWeek,
+      sub: "notes created",
+      positive: notesThisWeek > 0 ? true : null,
+      icon: <TrendingUp className="h-5 w-5" />,
+      accent: "#F5C842",
+      accentBg: "#F5C84220",
+    },
+    {
+      label: "Storage Used",
+      value: storage,
+      sub: `across ${files.length} files`,
+      positive: null,
+      icon: <HardDrive className="h-5 w-5" />,
+      accent: "#FF9F43",
+      accentBg: "#FF9F4320",
+    },
+  ]
+
+  // Shared card style
+  const cardStyle: React.CSSProperties = {
+    background: "#FFFFFF",
+    border: "1px solid #E8E6DF",
+    boxShadow: "0 1px 3px rgba(26,26,26,0.06)",
+    borderRadius: "1rem",
+  }
+
   return (
-    <div className="space-y-6">
-      {/* ── Error banners ──────────────────────────────────────────── */}
+    <div className="space-y-6" style={{ background: "#FAFAF8" }}>
+      {/* ── Error banners ─────────────────────────────────────── */}
       {notesError && <ErrorBanner message={notesError} />}
       {filesError && <ErrorBanner message={filesError} />}
 
-      {/* ── Stat cards ──────────────────────────────────────────────── */}
-      <div
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        style={{ animationFillMode: "both" }}
-      >
-        {[
-          {
-            label: "Total Notes",
-            value: notes.length.toLocaleString(),
-            sub: `${notesToday} created today`,
-            positive: notesToday > 0 ? true : null,
-            icon: <FileText className="h-5 w-5" />,
-          },
-          {
-            label: "Total Files",
-            value: files.length.toLocaleString(),
-            sub: `${filesToday} uploaded today`,
-            positive: filesToday > 0 ? true : null,
-            icon: <FolderOpen className="h-5 w-5" />,
-          },
-          {
-            label: "This Week",
-            value: notesThisWeek,
-            sub: "notes created",
-            positive: notesThisWeek > 0 ? true : null,
-            icon: <TrendingUp className="h-5 w-5" />,
-          },
-          {
-            label: "Storage Used",
-            value: storage,
-            sub: `across ${files.length} files`,
-            positive: null,
-            icon: <HardDrive className="h-5 w-5" />,
-          },
-        ].map((card, i) => (
+      {/* ── Stat cards ────────────────────────────────────────── */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((card, i) => (
           <div
             key={card.label}
             className="animate-in fade-in slide-in-from-bottom-2"
@@ -331,35 +394,40 @@ export function DashboardClient({
         ))}
       </div>
 
-      {/* ── Charts row ──────────────────────────────────────────────── */}
+      {/* ── Charts row ────────────────────────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Notes by month — bar */}
         <div
-          className="animate-in rounded-2xl border border-border/60 bg-card p-5 shadow-sm fade-in slide-in-from-bottom-2"
+          className="animate-in p-5 fade-in slide-in-from-bottom-2"
           style={{
+            ...cardStyle,
             animationDelay: "240ms",
             animationDuration: "300ms",
             animationFillMode: "both",
           }}
         >
-          <p className="text-sm font-semibold text-foreground">Notes Created</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Last 6 months</p>
+          <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
+            Notes Created
+          </p>
+          <p className="mt-0.5 text-xs" style={{ color: "#888" }}>
+            Last 6 months
+          </p>
           <div className="mt-4 h-44">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={notesByMonth} barSize={18}>
                 <CartesianGrid
                   vertical={false}
-                  stroke="hsl(var(--border))"
+                  stroke="#E8E6DF"
                   strokeDasharray="3 3"
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={axisTickStyle}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={axisTickStyle}
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
@@ -367,19 +435,22 @@ export function DashboardClient({
                 />
                 <Tooltip
                   content={<ChartTooltip />}
-                  cursor={{ fill: "hsl(var(--muted)/0.4)" }}
+                  cursor={{ fill: "#F4F2EC" }}
                 />
                 <Bar
                   dataKey="count"
                   name="notes"
                   radius={[4, 4, 0, 0]}
-                  fill="hsl(var(--primary))"
+                  fill="#5B9FE8"
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
           {lastNoteTime && (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <p
+              className="mt-3 flex items-center gap-1.5 text-xs"
+              style={{ color: "#999" }}
+            >
               <Clock className="h-3 w-3" />
               updated{" "}
               {formatRelative(
@@ -391,31 +462,36 @@ export function DashboardClient({
 
         {/* Files by day — line */}
         <div
-          className="animate-in rounded-2xl border border-border/60 bg-card p-5 shadow-sm fade-in slide-in-from-bottom-2"
+          className="animate-in p-5 fade-in slide-in-from-bottom-2"
           style={{
+            ...cardStyle,
             animationDelay: "300ms",
             animationDuration: "300ms",
             animationFillMode: "both",
           }}
         >
-          <p className="text-sm font-semibold text-foreground">File Uploads</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">By day of week</p>
+          <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
+            File Uploads
+          </p>
+          <p className="mt-0.5 text-xs" style={{ color: "#888" }}>
+            By day of week
+          </p>
           <div className="mt-4 h-44">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={filesByDay}>
                 <CartesianGrid
-                  stroke="hsl(var(--border))"
+                  stroke="#E8E6DF"
                   strokeDasharray="3 3"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={axisTickStyle}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={axisTickStyle}
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
@@ -426,16 +502,19 @@ export function DashboardClient({
                   type="monotone"
                   dataKey="count"
                   name="files"
-                  stroke="hsl(var(--primary))"
+                  stroke="#4CAF72"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 3, fill: "#4CAF72", strokeWidth: 0 }}
+                  activeDot={{ r: 5, fill: "#2E8B50" }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
           {lastFileTime && (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <p
+              className="mt-3 flex items-center gap-1.5 text-xs"
+              style={{ color: "#999" }}
+            >
               <Clock className="h-3 w-3" />
               updated{" "}
               {formatRelative(
@@ -447,31 +526,36 @@ export function DashboardClient({
 
         {/* Notes activity by day — line */}
         <div
-          className="animate-in rounded-2xl border border-border/60 bg-card p-5 shadow-sm fade-in slide-in-from-bottom-2"
+          className="animate-in p-5 fade-in slide-in-from-bottom-2"
           style={{
+            ...cardStyle,
             animationDelay: "360ms",
             animationDuration: "300ms",
             animationFillMode: "both",
           }}
         >
-          <p className="text-sm font-semibold text-foreground">Note Activity</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">By day of week</p>
+          <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
+            Note Activity
+          </p>
+          <p className="mt-0.5 text-xs" style={{ color: "#888" }}>
+            By day of week
+          </p>
           <div className="mt-4 h-44">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={notesByDay}>
                 <CartesianGrid
-                  stroke="hsl(var(--border))"
+                  stroke="#E8E6DF"
                   strokeDasharray="3 3"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={axisTickStyle}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={axisTickStyle}
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
@@ -482,22 +566,25 @@ export function DashboardClient({
                   type="monotone"
                   dataKey="count"
                   name="notes"
-                  stroke="hsl(var(--primary))"
+                  stroke="#FF9F43"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 3, fill: "#FF9F43", strokeWidth: 0 }}
+                  activeDot={{ r: 5, fill: "#E8902E" }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p
+            className="mt-3 flex items-center gap-1.5 text-xs"
+            style={{ color: "#999" }}
+          >
             <Clock className="h-3 w-3" />
             Just Updated
           </p>
         </div>
       </div>
 
-      {/* ── Recent activity tables ───────────────────────────────────── */}
+      {/* ── Recent activity tables ─────────────────────────────── */}
       <div
         className="grid animate-in gap-4 fade-in slide-in-from-bottom-2 lg:grid-cols-2"
         style={{
@@ -507,44 +594,72 @@ export function DashboardClient({
         }}
       >
         {/* Recent Notes */}
-        <div className="rounded-2xl border border-border/60 bg-card shadow-sm">
-          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+        <div style={cardStyle}>
+          <div
+            className="flex items-center justify-between px-5 py-3.5"
+            style={{ borderBottom: "1px solid #E8E6DF" }}
+          >
             <div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
                 Recent Notes
               </p>
-              <p className="text-xs text-muted-foreground">Latest activity</p>
+              <p className="text-xs" style={{ color: "#888" }}>
+                Latest activity
+              </p>
             </div>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            <span
+              className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{ background: "#5B9FE820", color: "#5B9FE8" }}
+            >
               {notes.length}
             </span>
           </div>
 
           {notesError ? (
-            <p className="px-5 py-4 text-sm text-muted-foreground">
+            <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
               Failed to load notes.
             </p>
           ) : recentNotes.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-muted-foreground">
+            <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
               No notes yet.
             </p>
           ) : (
-            <ul className="divide-y divide-border/40">
+            <ul>
               {recentNotes.map((note, i) => (
                 <li
                   key={note.id}
-                  className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-muted/30"
-                  style={{ animationDelay: `${420 + i * 40}ms` }}
+                  className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150"
+                  style={{
+                    borderBottom:
+                      i < recentNotes.length - 1 ? "1px solid #E8E6DF" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLLIElement).style.background =
+                      "#F4F2EC"
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLLIElement).style.background =
+                      "transparent"
+                  }}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <FileText className="h-3.5 w-3.5 text-primary" />
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: "#5B9FE820" }}
+                    >
+                      <FileText
+                        className="h-3.5 w-3.5"
+                        style={{ color: "#5B9FE8" }}
+                      />
                     </div>
-                    <p className="truncate text-sm font-medium text-foreground">
+                    <p
+                      className="truncate text-sm font-medium"
+                      style={{ color: "#1a1a1a" }}
+                    >
                       {note.title || "Untitled"}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                  <span className="shrink-0 text-xs" style={{ color: "#999" }}>
                     {formatRelative(note.updated_at ?? note.created_at)}
                   </span>
                 </li>
@@ -554,51 +669,79 @@ export function DashboardClient({
         </div>
 
         {/* Recent Files */}
-        <div className="rounded-2xl border border-border/60 bg-card shadow-sm">
-          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+        <div style={cardStyle}>
+          <div
+            className="flex items-center justify-between px-5 py-3.5"
+            style={{ borderBottom: "1px solid #E8E6DF" }}
+          >
             <div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
                 Recent Files
               </p>
-              <p className="text-xs text-muted-foreground">Latest uploads</p>
+              <p className="text-xs" style={{ color: "#888" }}>
+                Latest uploads
+              </p>
             </div>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            <span
+              className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{ background: "#4CAF7220", color: "#4CAF72" }}
+            >
               {files.length}
             </span>
           </div>
 
           {filesError ? (
-            <p className="px-5 py-4 text-sm text-muted-foreground">
+            <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
               Failed to load files.
             </p>
           ) : recentFiles.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-muted-foreground">
+            <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
               No files yet.
             </p>
           ) : (
-            <ul className="divide-y divide-border/40">
+            <ul>
               {recentFiles.map((file, i) => (
                 <li
                   key={file.id}
-                  className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-muted/30"
-                  style={{ animationDelay: `${420 + i * 40}ms` }}
+                  className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150"
+                  style={{
+                    borderBottom:
+                      i < recentFiles.length - 1 ? "1px solid #E8E6DF" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLLIElement).style.background =
+                      "#F4F2EC"
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLLIElement).style.background =
+                      "transparent"
+                  }}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: "#4CAF7220" }}
+                    >
+                      <FolderOpen
+                        className="h-3.5 w-3.5"
+                        style={{ color: "#4CAF72" }}
+                      />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">
+                      <p
+                        className="truncate text-sm font-medium"
+                        style={{ color: "#1a1a1a" }}
+                      >
                         {file.name || "Unnamed file"}
                       </p>
                       {file.size != null && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs" style={{ color: "#999" }}>
                           {totalSize([file])}
                         </p>
                       )}
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                  <span className="shrink-0 text-xs" style={{ color: "#999" }}>
                     {formatRelative(file.updated_at ?? file.created_at)}
                   </span>
                 </li>

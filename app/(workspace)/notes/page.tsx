@@ -32,6 +32,73 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+// ─── Palette ──────────────────────────────────────────────────────────────────
+// All colors sourced from the landing page palette — no shadcn CSS vars.
+
+const C = {
+  // Surfaces
+  pageBg: "#FAFAF8",
+  sidebarBg: "#F4F2EC",
+  cardBg: "#FFFFFF",
+  editorBg: "#FFFFFF",
+
+  // Borders
+  border: "#E8E6DF",
+  borderStrong: "#C8C4BC",
+
+  // Text
+  textPrimary: "#1a1a1a",
+  textSecondary: "#777",
+  textMuted: "#999",
+  textPlaceholder: "#C8C4BC",
+
+  // Accent — Blue (notes, primary actions)
+  blue: "#5B9FE8",
+  blueDark: "#4A8FD8",
+  blueBg: "#5B9FE814",
+  blueBgHover: "#5B9FE824",
+
+  // Accent — Green (files, success)
+  green: "#4CAF72",
+  greenDark: "#2E8B50",
+  greenBg: "#4CAF7214",
+
+  // Accent — Gold (tags, week)
+  gold: "#F5C842",
+  goldDark: "#D4A820",
+  goldBg: "#F5C84218",
+
+  // Accent — Orange (attach, storage)
+  orange: "#FF9F43",
+  orangeDark: "#E8902E",
+  orangeBg: "#FF9F4318",
+
+  // Accent — Red (destructive)
+  red: "#FF6B6B",
+  redDark: "#FF6060",
+  redBg: "#FF6B6B14",
+
+  // Hover tint
+  rowHover: "#F4F2EC",
+  mutedHover: "#EDEAE2",
+} as const
+
+// Tag colors — cycling through the palette for variety
+const TAG_COLORS = [
+  { bg: "#5B9FE814", text: "#4A8FD8", border: "#5B9FE830" },
+  { bg: "#4CAF7214", text: "#2E8B50", border: "#4CAF7230" },
+  { bg: "#F5C84218", text: "#D4A820", border: "#F5C84230" },
+  { bg: "#FF9F4318", text: "#E8902E", border: "#FF9F4330" },
+  { bg: "#FF6B6B14", text: "#FF6060", border: "#FF6B6B30" },
+]
+
+function tagColor(tag: string) {
+  let hash = 0
+  for (let i = 0; i < tag.length; i++)
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash)
+  return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length]
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Note = {
@@ -92,20 +159,15 @@ function isImage(mimeType: string) {
 
 function EmptyIllustration() {
   return (
-    <svg
-      viewBox="0 0 220 180"
-      fill="none"
-      className="mx-auto w-44 text-muted-foreground opacity-40"
-      aria-hidden
-    >
-      <rect x="20" y="130" width="180" height="8" rx="4" fill="currentColor" />
+    <svg viewBox="0 0 220 180" fill="none" className="mx-auto w-44" aria-hidden>
+      <rect x="20" y="130" width="180" height="8" rx="4" fill={C.border} />
       <rect
         x="40"
         y="138"
         width="10"
         height="30"
         rx="3"
-        fill="currentColor"
+        fill={C.border}
         opacity=".6"
       />
       <rect
@@ -114,7 +176,7 @@ function EmptyIllustration() {
         width="10"
         height="30"
         rx="3"
-        fill="currentColor"
+        fill={C.border}
         opacity=".6"
       />
       <rect
@@ -123,9 +185,8 @@ function EmptyIllustration() {
         width="90"
         height="65"
         rx="6"
-        fill="currentColor"
-        opacity=".15"
-        stroke="currentColor"
+        fill={C.blueBg}
+        stroke={C.blue}
         strokeOpacity=".3"
         strokeWidth="2"
       />
@@ -135,8 +196,8 @@ function EmptyIllustration() {
         width="76"
         height="51"
         rx="3"
-        fill="currentColor"
-        opacity=".08"
+        fill={C.blue}
+        opacity=".05"
       />
       <rect
         x="88"
@@ -144,7 +205,7 @@ function EmptyIllustration() {
         width="40"
         height="3"
         rx="1.5"
-        fill="currentColor"
+        fill={C.blue}
         opacity=".5"
       />
       <rect
@@ -153,8 +214,8 @@ function EmptyIllustration() {
         width="60"
         height="2"
         rx="1"
-        fill="currentColor"
-        opacity=".3"
+        fill={C.textMuted}
+        opacity=".4"
       />
       <rect
         x="88"
@@ -162,8 +223,8 @@ function EmptyIllustration() {
         width="50"
         height="2"
         rx="1"
-        fill="currentColor"
-        opacity=".3"
+        fill={C.textMuted}
+        opacity=".4"
       />
       <rect
         x="88"
@@ -171,8 +232,8 @@ function EmptyIllustration() {
         width="55"
         height="2"
         rx="1"
-        fill="currentColor"
-        opacity=".3"
+        fill={C.textMuted}
+        opacity=".4"
       />
       <rect
         x="88"
@@ -180,8 +241,8 @@ function EmptyIllustration() {
         width="35"
         height="2"
         rx="1"
-        fill="currentColor"
-        opacity=".3"
+        fill={C.textMuted}
+        opacity=".4"
       />
       <rect
         x="114"
@@ -189,7 +250,7 @@ function EmptyIllustration() {
         width="12"
         height="8"
         rx="2"
-        fill="currentColor"
+        fill={C.blue}
         opacity=".4"
       />
       <rect
@@ -198,36 +259,29 @@ function EmptyIllustration() {
         width="24"
         height="4"
         rx="2"
-        fill="currentColor"
-        opacity=".3"
+        fill={C.blue}
+        opacity=".25"
       />
-      <ellipse
-        cx="55"
-        cy="108"
-        rx="12"
-        ry="16"
-        fill="currentColor"
-        opacity=".1"
-      />
-      <circle cx="55" cy="88" r="10" fill="currentColor" opacity=".15" />
+      <ellipse cx="55" cy="108" rx="12" ry="16" fill={C.gold} opacity=".15" />
+      <circle cx="55" cy="88" r="10" fill={C.gold} opacity=".2" />
       <rect
         x="175"
         y="80"
         width="3"
         height="50"
         rx="1.5"
-        fill="currentColor"
+        fill={C.green}
         opacity=".3"
       />
       <path
         d="M165 80 Q175 70 185 80"
-        stroke="currentColor"
+        stroke={C.green}
         strokeOpacity=".3"
         strokeWidth="2"
-        fill="currentColor"
+        fill={C.green}
         fillOpacity=".05"
       />
-      <circle cx="175" cy="80" r="4" fill="currentColor" opacity=".3" />
+      <circle cx="175" cy="80" r="4" fill={C.green} opacity=".35" />
     </svg>
   )
 }
@@ -244,25 +298,21 @@ function Lightbox({
   onClose: () => void
 }) {
   const [idx, setIdx] = useState(startIndex)
-  // "visible" drives the CSS open state; "closing" triggers the exit animation
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
-  // tracks the displayed image so we can cross-fade on switch
   const [imgKey, setImgKey] = useState(0)
 
   const current = images[idx]
 
-  // Mount → trigger enter on next tick so transition plays
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(id)
   }, [])
 
-  // Animated close: start exit, then unmount after transition completes
   const handleClose = useCallback(() => {
     setClosing(true)
     setVisible(false)
-    setTimeout(onClose, 280) // matches transition duration below
+    setTimeout(onClose, 280)
   }, [onClose])
 
   const prev = useCallback(() => {
@@ -287,35 +337,44 @@ function Lightbox({
 
   if (!current) return null
 
+  const open = visible && !closing
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        // Backdrop: fade in/out
-        backgroundColor: `rgba(0,0,0,${visible && !closing ? 0.8 : 0})`,
-        backdropFilter: `blur(${visible && !closing ? 6 : 0}px)`,
+        backgroundColor: `rgba(26,26,26,${open ? 0.82 : 0})`,
+        backdropFilter: `blur(${open ? 6 : 0}px)`,
         transition: "background-color 280ms ease, backdrop-filter 280ms ease",
       }}
       onClick={handleClose}
     >
       <div
-        className="relative flex max-h-[90vh] max-w-[90vw] flex-col overflow-hidden rounded-2xl bg-card shadow-2xl"
+        className="relative flex max-h-[90vh] max-w-[90vw] flex-col overflow-hidden shadow-2xl"
         style={{
-          // Card: scale + fade in/out
-          opacity: visible && !closing ? 1 : 0,
-          transform: `scale(${visible && !closing ? 1 : 0.94})`,
+          background: C.cardBg,
+          border: `1px solid ${C.border}`,
+          borderRadius: "1.25rem",
+          opacity: open ? 1 : 0,
+          transform: `scale(${open ? 1 : 0.94})`,
           transition:
             "opacity 260ms cubic-bezier(0.16,1,0.3,1), transform 260ms cubic-bezier(0.16,1,0.3,1)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{ borderBottom: `1px solid ${C.border}` }}
+        >
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">
+            <p
+              className="truncate text-sm font-semibold"
+              style={{ color: C.textPrimary }}
+            >
               {current.name}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px]" style={{ color: C.textMuted }}>
               {formatBytes(current.size)}
             </p>
           </div>
@@ -325,14 +384,38 @@ function Lightbox({
               download={current.name}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-lg transition-all"
+              style={{ color: C.textSecondary }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLAnchorElement).style.background =
+                  C.blueBg
+                ;(e.currentTarget as HTMLAnchorElement).style.color = C.blue
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLAnchorElement).style.background =
+                  "transparent"
+                ;(e.currentTarget as HTMLAnchorElement).style.color =
+                  C.textSecondary
+              }}
               aria-label="Download"
             >
               <Download className="h-4 w-4" />
             </a>
             <button
               onClick={handleClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-lg transition-all"
+              style={{ color: C.textSecondary }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  C.redBg
+                ;(e.currentTarget as HTMLButtonElement).style.color = C.red
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "transparent"
+                ;(e.currentTarget as HTMLButtonElement).style.color =
+                  C.textSecondary
+              }}
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -340,40 +423,64 @@ function Lightbox({
           </div>
         </div>
 
-        {/* Image — keyed so it re-mounts and cross-fades on switch */}
-        <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/20 p-4">
+        {/* Image */}
+        <div
+          className="flex flex-1 items-center justify-center overflow-hidden p-4"
+          style={{ background: C.sidebarBg }}
+        >
           <img
             key={imgKey}
             src={current.url}
             alt={current.name}
-            className="max-h-[70vh] max-w-full rounded-lg object-contain shadow-md"
+            className="max-h-[70vh] max-w-full rounded-xl object-contain"
             style={{
+              boxShadow: "0 8px 32px rgba(26,26,26,0.12)",
               animation:
                 "lightbox-img-in 220ms cubic-bezier(0.16,1,0.3,1) both",
             }}
           />
         </div>
 
-        {/* Nav (only if multiple) */}
+        {/* Nav */}
         {images.length > 1 && (
           <>
             <button
               onClick={prev}
-              className="absolute top-1/2 left-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60 active:scale-90"
+              className="absolute top-1/2 left-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-all active:scale-90"
+              style={{ background: "rgba(26,26,26,0.45)" }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(26,26,26,0.65)"
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(26,26,26,0.45)"
+              }}
               aria-label="Previous image"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={next}
-              className="absolute top-1/2 right-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60 active:scale-90"
+              className="absolute top-1/2 right-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-all active:scale-90"
+              style={{ background: "rgba(26,26,26,0.45)" }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(26,26,26,0.65)"
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(26,26,26,0.45)"
+              }}
               aria-label="Next image"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
 
-            {/* Dot indicators */}
-            <div className="flex items-center justify-center gap-1.5 py-3">
+            <div
+              className="flex items-center justify-center gap-1.5 py-3"
+              style={{ background: C.cardBg }}
+            >
               {images.map((_, i) => (
                 <button
                   key={i}
@@ -381,11 +488,12 @@ function Lightbox({
                     setIdx(i)
                     setImgKey((k) => k + 1)
                   }}
-                  className={`h-1.5 rounded-full transition-all duration-200 ${
-                    i === idx
-                      ? "w-4 bg-primary"
-                      : "w-1.5 bg-muted-foreground/30"
-                  }`}
+                  className="rounded-full transition-all duration-200"
+                  style={{
+                    height: "6px",
+                    width: i === idx ? "16px" : "6px",
+                    background: i === idx ? C.blue : C.border,
+                  }}
                   aria-label={`Go to image ${i + 1}`}
                 />
               ))}
@@ -394,7 +502,6 @@ function Lightbox({
         )}
       </div>
 
-      {/* Keyframe for image cross-fade */}
       <style>{`
         @keyframes lightbox-img-in {
           from { opacity: 0; transform: scale(0.97); }
@@ -419,29 +526,45 @@ function ImageGallery({
   if (images.length === 0) return null
 
   return (
-    <div className="mt-4">
-      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium tracking-widest text-muted-foreground/60 uppercase">
-        <ImageIcon className="h-3 w-3" />
+    <div className="mt-10">
+      <p
+        className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase"
+        style={{ color: C.textMuted }}
+      >
+        <ImageIcon className="h-3 w-3" style={{ color: C.blue }} />
         Images
       </p>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+      <div className="flex flex-wrap gap-1.5">
         {images.map((img, i) => (
           <div
             key={img.id}
-            className="group relative aspect-square overflow-hidden rounded-xl border border-border/60"
+            className="group relative overflow-hidden"
             style={{
-              // Staggered fade-up entrance for each thumbnail
+              width: "120px",
+              height: "120px",
+              flexShrink: 0,
+              borderRadius: "0.625rem",
+              border: `1px solid ${C.border}`,
               animation:
                 "gallery-thumb-in 320ms cubic-bezier(0.16,1,0.3,1) both",
               animationDelay: `${i * 55}ms`,
             }}
           >
             {img.uploading ? (
-              <div className="flex h-full w-full items-center justify-center bg-muted/60">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <div
+                className="flex h-full w-full items-center justify-center"
+                style={{ background: C.sidebarBg }}
+              >
+                <Loader2
+                  className="h-5 w-5 animate-spin"
+                  style={{ color: C.blue }}
+                />
               </div>
             ) : img.error ? (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-destructive/5 text-destructive">
+              <div
+                className="flex h-full w-full flex-col items-center justify-center gap-1"
+                style={{ background: C.redBg, color: C.red }}
+              >
                 <X className="h-4 w-4" />
                 <span className="text-[10px]">Failed</span>
               </div>
@@ -453,18 +576,27 @@ function ImageGallery({
                   alt={img.name}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                {/* Hover overlay */}
                 <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100">
                   <button
                     onClick={() => onOpenLightbox(i)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all hover:bg-white/30 active:scale-90"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-sm transition-all active:scale-90"
+                    style={{ background: "rgba(255,255,255,0.2)" }}
                     aria-label="View full size"
                   >
                     <ZoomIn className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onRemove(img.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all hover:bg-red-500/70 active:scale-90"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-sm transition-all active:scale-90"
+                    style={{ background: "rgba(255,255,255,0.2)" }}
+                    onMouseEnter={(e) => {
+                      ;(e.currentTarget as HTMLButtonElement).style.background =
+                        "rgba(255,107,107,0.65)"
+                    }}
+                    onMouseLeave={(e) => {
+                      ;(e.currentTarget as HTMLButtonElement).style.background =
+                        "rgba(255,255,255,0.2)"
+                    }}
                     aria-label="Remove image"
                   >
                     <X className="h-4 w-4" />
@@ -476,11 +608,10 @@ function ImageGallery({
         ))}
       </div>
 
-      {/* Keyframe for gallery thumbnail entrance */}
       <style>{`
         @keyframes gallery-thumb-in {
           from { opacity: 0; transform: translateY(10px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0)    scale(1); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>
@@ -498,17 +629,27 @@ function FileChip({
 }) {
   const inner = (
     <div
-      className={`group relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs transition-all duration-150 ${
-        attachment.error
-          ? "border-destructive/40 bg-destructive/5 text-destructive"
-          : "border-border/60 bg-muted/40 text-foreground hover:bg-muted/70"
-      }`}
+      className="group relative flex items-center gap-2 rounded-xl px-3 py-2 text-xs transition-all duration-150"
+      style={{
+        border: `1px solid ${attachment.error ? C.red + "55" : C.border}`,
+        background: attachment.error ? C.redBg : C.sidebarBg,
+        color: attachment.error ? C.red : C.textPrimary,
+      }}
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/40 bg-muted">
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+        style={{ border: `1px solid ${C.border}`, background: C.cardBg }}
+      >
         {attachment.uploading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          <Loader2
+            className="h-3.5 w-3.5 animate-spin"
+            style={{ color: C.blue }}
+          />
         ) : (
-          <File className="h-3.5 w-3.5 text-muted-foreground" />
+          <File
+            className="h-3.5 w-3.5"
+            style={{ color: attachment.error ? C.red : C.orange }}
+          />
         )}
       </div>
 
@@ -516,7 +657,10 @@ function FileChip({
         <p className="max-w-[140px] truncate leading-tight font-medium">
           {attachment.name}
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p
+          className="text-[10px]"
+          style={{ color: attachment.error ? C.red : C.textMuted }}
+        >
           {attachment.uploading
             ? "Uploading…"
             : attachment.error
@@ -526,7 +670,10 @@ function FileChip({
       </div>
 
       {!attachment.uploading && !attachment.error && (
-        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+        <ExternalLink
+          className="h-3 w-3 shrink-0"
+          style={{ color: C.textMuted }}
+        />
       )}
 
       <button
@@ -535,7 +682,17 @@ function FileChip({
           e.stopPropagation()
           onRemove()
         }}
-        className="ml-1 rounded-md p-0.5 text-muted-foreground opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+        className="ml-1 rounded-md p-0.5 opacity-0 transition-all duration-150 group-hover:opacity-100"
+        style={{ color: C.textMuted }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLButtonElement).style.background = C.redBg
+          ;(e.currentTarget as HTMLButtonElement).style.color = C.red
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLButtonElement).style.background =
+            "transparent"
+          ;(e.currentTarget as HTMLButtonElement).style.color = C.textMuted
+        }}
         aria-label={`Remove ${attachment.name}`}
       >
         <X className="h-3.5 w-3.5" />
@@ -575,22 +732,35 @@ function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
   return (
     <button
       onClick={onClick}
-      className={`group w-full rounded-2xl px-4 text-left transition-all duration-200 ease-out ${compact ? "py-2" : "py-3.5"} ${
-        active
-          ? "bg-primary text-primary-foreground shadow-md"
-          : "border border-border/60 bg-card hover:bg-muted/40"
-      }`}
+      className={`group w-full rounded-2xl px-4 text-left transition-all duration-200 ease-out ${compact ? "py-2" : "py-3.5"}`}
+      style={{
+        background: active ? C.blue : C.cardBg,
+        border: active ? `1px solid ${C.blueDark}` : `1px solid ${C.border}`,
+        boxShadow: active
+          ? `0 4px 16px ${C.blue}30`
+          : "0 1px 3px rgba(26,26,26,0.04)",
+      }}
+      onMouseEnter={(e) => {
+        if (!active)
+          (e.currentTarget as HTMLButtonElement).style.background = C.rowHover
+      }}
+      onMouseLeave={(e) => {
+        if (!active)
+          (e.currentTarget as HTMLButtonElement).style.background = C.cardBg
+      }}
     >
       <div className="flex items-center justify-between gap-2">
         <p
-          className={`line-clamp-1 text-sm leading-snug font-semibold ${active ? "text-primary-foreground" : "text-foreground"}`}
+          className="line-clamp-1 text-sm leading-snug font-semibold"
+          style={{ color: active ? "#FFFFFF" : C.textPrimary }}
         >
           {note.title || "Untitled"}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
           {compact && (
             <span
-              className={`text-[10px] font-medium ${active ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}
+              className="text-[10px] font-medium"
+              style={{ color: active ? "rgba(255,255,255,0.55)" : C.textMuted }}
             >
               {timeAgo(note.updated_at ?? note.created_at)}
             </span>
@@ -598,30 +768,72 @@ function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                className={`rounded-lg bg-transparent p-1 opacity-0 transition-all duration-150 group-hover:opacity-100 ${
-                  active
-                    ? "text-primary-foreground/70"
-                    : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                }`}
+                className="rounded-lg bg-transparent p-1 opacity-0 transition-all duration-150 group-hover:opacity-100"
+                style={{
+                  color: active ? "rgba(255,255,255,0.7)" : C.textMuted,
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      C.redBg
+                    ;(e.currentTarget as HTMLButtonElement).style.color = C.red
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      "transparent"
+                    ;(e.currentTarget as HTMLButtonElement).style.color =
+                      C.textMuted
+                  }
+                }}
                 aria-label="Delete note"
                 size="sm"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent
+              style={{ background: C.cardBg, border: `1px solid ${C.border}` }}
+            >
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogTitle style={{ color: C.textPrimary }}>
+                  Are you absolutely sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription style={{ color: C.textSecondary }}>
                   This action cannot be undone. This will permanently delete
                   your note and all its attachments.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel
+                  style={{ borderColor: C.border, color: C.textSecondary }}
+                >
+                  Cancel
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={onDelete}
-                  className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95"
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-95"
+                  style={{
+                    border: `1px solid ${C.border}`,
+                    color: C.textSecondary,
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      C.redBg
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      C.red + "55"
+                    ;(e.currentTarget as HTMLButtonElement).style.color = C.red
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      "transparent"
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      C.border
+                    ;(e.currentTarget as HTMLButtonElement).style.color =
+                      C.textSecondary
+                  }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Delete
@@ -636,24 +848,36 @@ function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
         <>
           {tags.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide ${active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/10 text-primary"}`}
-                >
-                  {tag}
-                </span>
-              ))}
+              {tags.map((tag) => {
+                const tc = tagColor(tag)
+                return (
+                  <span
+                    key={tag}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                    style={{
+                      background: active ? "rgba(255,255,255,0.2)" : tc.bg,
+                      color: active ? "rgba(255,255,255,0.9)" : tc.text,
+                      border: `1px solid ${active ? "rgba(255,255,255,0.15)" : tc.border}`,
+                    }}
+                  >
+                    {tag}
+                  </span>
+                )
+              })}
             </div>
           )}
           <p
-            className={`mt-1.5 line-clamp-2 text-xs leading-relaxed ${active ? "text-primary-foreground/75" : "text-muted-foreground"}`}
+            className="mt-1.5 line-clamp-2 text-xs leading-relaxed"
+            style={{
+              color: active ? "rgba(255,255,255,0.72)" : C.textSecondary,
+            }}
           >
             {preview(note.content)}
           </p>
           <div className="mt-2">
             <span
-              className={`text-[10px] font-medium ${active ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}
+              className="text-[10px] font-medium"
+              style={{ color: active ? "rgba(255,255,255,0.5)" : C.textMuted }}
             >
               {timeAgo(note.updated_at ?? note.created_at)}
             </span>
@@ -677,12 +901,10 @@ export default function Page() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [compact, setCompact] = useState(false)
 
-  // ── Attachments ────────────────────────────────────────────────────────────
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [attachmentsLoading, setAttachmentsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Lightbox ───────────────────────────────────────────────────────────────
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const imageAttachments = attachments.filter(
@@ -690,7 +912,6 @@ export default function Page() {
   )
   const fileAttachments = attachments.filter((a) => !isImage(a.mime_type))
 
-  // ── Fetch attachments for a note (rehydrates on note switch / page refresh)
   const fetchAttachments = useCallback(async (noteId: string) => {
     setAttachmentsLoading(true)
     try {
@@ -700,13 +921,12 @@ export default function Page() {
         setAttachments(Array.isArray(data) ? data : [])
       }
     } catch {
-      // Non-critical — show empty state silently
+      // silent
     } finally {
       setAttachmentsLoading(false)
     }
   }, [])
 
-  // ── Upload handler ─────────────────────────────────────────────────────────
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
     if (!files.length || !selectedNote) return
@@ -715,7 +935,6 @@ export default function Page() {
       const tempId = crypto.randomUUID()
       const objectUrl = URL.createObjectURL(file)
 
-      // Optimistic chip
       setAttachments((prev) => [
         ...prev,
         {
@@ -736,7 +955,6 @@ export default function Page() {
           method: "POST",
           body: form,
         })
-
         if (res.ok) {
           const saved = await res.json()
           setAttachments((prev) =>
@@ -761,33 +979,27 @@ export default function Page() {
         )
       }
     }
-
     e.target.value = ""
   }
 
-  // ── Remove attachment (optimistic + API) ───────────────────────────────────
   const removeAttachment = async (id: string) => {
     setAttachments((prev) => {
       const target = prev.find((a) => a.id === id)
       if (target?.url.startsWith("blob:")) URL.revokeObjectURL(target.url)
       return prev.filter((a) => a.id !== id)
     })
-
     if (selectedNote) {
       try {
         await fetch(
           `/api/notes/${selectedNote.id}/attachments?attachmentId=${id}`,
-          {
-            method: "DELETE",
-          }
+          { method: "DELETE" }
         )
       } catch {
-        // Best effort
+        /* best effort */
       }
     }
   }
 
-  // ── Notes CRUD ─────────────────────────────────────────────────────────────
   const fetchNotes = useCallback(async () => {
     const res = await fetch("/api/notes")
     if (res.ok) {
@@ -862,7 +1074,6 @@ export default function Page() {
     fetchNotes()
   }
 
-  // Fetch attachments whenever we switch notes
   const selectNote = (note: Note) => {
     setSelectedNote(note)
     setTitle(note.title)
@@ -886,7 +1097,6 @@ export default function Page() {
 
   return (
     <>
-      {/* Lightbox portal */}
       {lightboxIndex !== null && imageAttachments.length > 0 && (
         <Lightbox
           images={imageAttachments}
@@ -895,17 +1105,48 @@ export default function Page() {
         />
       )}
 
-      <div className="flex h-screen overflow-hidden">
-        {/* ── Left panel ─────────────────────────────────────────────── */}
-        <aside className="flex h-screen w-72 shrink-0 flex-col border-r border-border/60 bg-muted/30">
+      <div
+        className="flex h-screen overflow-hidden rounded-lg"
+        style={{ background: C.pageBg }}
+      >
+        {/* ── Left panel ─────────────────────────────────────────── */}
+        <aside
+          className="flex h-screen w-72 shrink-0 flex-col"
+          style={{
+            background: C.sidebarBg,
+            borderRight: `1px solid ${C.border}`,
+          }}
+        >
+          {/* Header */}
           <div className="flex items-center justify-between px-5 pt-6 pb-3">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            <h1
+              className="text-xl font-semibold tracking-tight"
+              style={{ color: C.textPrimary }}
+            >
               Notes
             </h1>
             <div className="flex items-center gap-1.5">
+              {/* View toggle */}
               <button
                 onClick={() => setCompact((v) => !v)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-card text-muted-foreground transition-all duration-150 ease-out hover:bg-muted hover:text-foreground active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
+                style={{
+                  border: `1px solid ${C.border}`,
+                  background: C.cardBg,
+                  color: C.textMuted,
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.mutedHover
+                  ;(e.currentTarget as HTMLButtonElement).style.color =
+                    C.textPrimary
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.cardBg
+                  ;(e.currentTarget as HTMLButtonElement).style.color =
+                    C.textMuted
+                }}
                 aria-label={
                   compact ? "Switch to list view" : "Switch to compact view"
                 }
@@ -916,9 +1157,28 @@ export default function Page() {
                   <LayoutList className="h-3.5 w-3.5" />
                 )}
               </button>
+
+              {/* New note */}
               <button
                 onClick={createNote}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-all duration-150 ease-out hover:opacity-90 hover:shadow-md active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
+                style={{
+                  background: C.blue,
+                  color: "#FFFFFF",
+                  boxShadow: `0 2px 8px ${C.blue}40`,
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.blueDark
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+                    `0 4px 12px ${C.blue}55`
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.blue
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+                    `0 2px 8px ${C.blue}40`
+                }}
                 aria-label="New note"
               >
                 <Plus className="h-4 w-4" strokeWidth={2.5} />
@@ -926,18 +1186,52 @@ export default function Page() {
             </div>
           </div>
 
+          {/* Search */}
+          <div className="px-3 pb-2">
+            <div
+              className="flex items-center gap-2 rounded-xl px-3 py-2"
+              style={{ background: C.cardBg, border: `1px solid ${C.border}` }}
+            >
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke={C.textMuted}
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search notes…"
+                className="w-full bg-transparent text-xs outline-none"
+                style={{ color: C.textPrimary }}
+              />
+            </div>
+          </div>
+
+          {/* Note list */}
           <div className="min-h-0 flex-1">
-            <div className="h-full space-y-2 overflow-y-auto px-3 pb-4">
+            <div className="h-full space-y-1.5 overflow-y-auto px-3 pb-4">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-24 animate-pulse rounded-2xl bg-muted/60"
-                    style={{ animationDelay: `${i * 80}ms` }}
+                    className="h-24 animate-pulse rounded-2xl"
+                    style={{
+                      background: C.border,
+                      animationDelay: `${i * 80}ms`,
+                    }}
                   />
                 ))
               ) : filtered.length === 0 ? (
-                <p className="pt-8 text-center text-xs text-muted-foreground">
+                <p
+                  className="pt-8 text-center text-xs"
+                  style={{ color: C.textMuted }}
+                >
                   {search
                     ? "No notes match your search."
                     : "No notes yet — create one!"}
@@ -970,15 +1264,21 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* ── Right panel ────────────────────────────────────────────── */}
-        <main className="flex flex-1 flex-col overflow-hidden rounded-r-2xl bg-card">
+        {/* ── Right panel — Editor ────────────────────────────────── */}
+        <main
+          className="flex flex-1 flex-col overflow-hidden"
+          style={{ background: C.editorBg, borderRadius: "0 1rem 1rem 0" }}
+        >
           {selectedNote ? (
             <>
-              {/* Header */}
-              <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-8 py-4">
+              {/* Editor header */}
+              <div
+                className="flex shrink-0 items-center justify-between px-8 py-4"
+                style={{ borderBottom: `1px solid ${C.border}` }}
+              >
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <FileText className="h-4 w-4" style={{ color: C.blue }} />
+                  <span className="rounded-full bg-[#3fb950] px-2 py-0.5 text-xs font-medium text-white">
                     {timeAgo(
                       selectedNote.updated_at ?? selectedNote.created_at
                     )}
@@ -986,31 +1286,84 @@ export default function Page() {
                 </div>
                 <div className="flex items-center gap-3">
                   {saving && (
-                    <span className="animate-pulse text-xs text-muted-foreground">
+                    <span
+                      className="flex animate-pulse items-center gap-1.5 text-xs"
+                      style={{ color: C.green }}
+                    >
+                      <div
+                        className="h-1.5 w-1.5 animate-pulse rounded-full"
+                        style={{ background: C.green }}
+                      />
                       Saving…
                     </span>
                   )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <button
+                        className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150"
+                        style={{
+                          border: `1px solid ${C.border}`,
+                          color: C.textMuted,
+                          background: "transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          ;(
+                            e.currentTarget as HTMLButtonElement
+                          ).style.background = C.redBg
+                          ;(
+                            e.currentTarget as HTMLButtonElement
+                          ).style.borderColor = C.red + "44"
+                          ;(e.currentTarget as HTMLButtonElement).style.color =
+                            C.red
+                        }}
+                        onMouseLeave={(e) => {
+                          ;(
+                            e.currentTarget as HTMLButtonElement
+                          ).style.background = "transparent"
+                          ;(
+                            e.currentTarget as HTMLButtonElement
+                          ).style.borderColor = C.border
+                          ;(e.currentTarget as HTMLButtonElement).style.color =
+                            C.textMuted
+                        }}
+                      >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      </button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent
+                      style={{
+                        background: C.cardBg,
+                        border: `1px solid ${C.border}`,
+                      }}
+                    >
                       <AlertDialogHeader>
-                        <AlertDialogTitle>
+                        <AlertDialogTitle style={{ color: C.textPrimary }}>
                           Are you absolutely sure?
                         </AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogDescription
+                          style={{ color: C.textSecondary }}
+                        >
                           This action cannot be undone. This will permanently
                           delete your note and all its attachments.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel
+                          style={{
+                            borderColor: C.border,
+                            color: C.textSecondary,
+                          }}
+                        >
+                          Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteNote(selectedNote.id)}
-                          className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95"
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-95"
+                          style={{
+                            border: `1px solid ${C.border}`,
+                            color: C.textSecondary,
+                            background: "transparent",
+                          }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete
@@ -1021,154 +1374,254 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Scrollable content */}
-              <div className="flex flex-1 flex-col overflow-y-auto px-10 py-6">
-                {/* Title */}
-                <input
-                  value={title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="Note title"
-                  className="w-full bg-transparent text-3xl font-semibold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/40"
-                />
-
-                {/* Tags */}
-                {currentTags.length > 0 && (
-                  <div className="flex items-center gap-2 pt-3">
-                    <Tag className="h-3 w-3 text-muted-foreground" />
-                    {currentTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-5 border-t border-border/60" />
-
-                {/* Textarea */}
-                <textarea
-                  value={content}
-                  onChange={(e) => handleContentChange(e.target.value)}
-                  placeholder={`Start writing…\n\nTip: use #tags to categorize your notes.`}
-                  className="mt-5 min-h-[180px] w-full resize-none bg-transparent text-[15px] leading-[1.85] text-foreground outline-none placeholder:text-muted-foreground/40"
-                />
-
-                {/* ── Attachments loading skeleton ── */}
-                {attachmentsLoading && (
-                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Loading attachments…
-                  </div>
-                )}
-
-                {/* ── Image gallery ── */}
-                {!attachmentsLoading && (
-                  <ImageGallery
-                    images={imageAttachments}
-                    onRemove={removeAttachment}
-                    onOpenLightbox={(i) => setLightboxIndex(i)}
-                  />
-                )}
-
-                {/* ── File chips ── */}
-                {!attachmentsLoading && fileAttachments.length > 0 && (
-                  <div className="mt-4">
-                    <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium tracking-widest text-muted-foreground/60 uppercase">
-                      <Paperclip className="h-3 w-3" />
-                      Files
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {fileAttachments.map((att) => (
-                        <FileChip
-                          key={att.id}
-                          attachment={att}
-                          onRemove={() => removeAttachment(att.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Bottom toolbar ── */}
-                <div className="mt-6 flex items-center gap-1 border-t border-border/40 pt-3">
-                  {/* Hidden file input */}
+              {/* Editor body — flex column, no outer scroll */}
+              <div className="flex flex-1 flex-col overflow-hidden">
+                {/* ── Fixed top: title + tags + divider ── */}
+                <div className="shrink-0 px-10 pt-6">
                   <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileSelect}
+                    value={title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    placeholder="Note title"
+                    className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none"
+                    style={{ color: C.textPrimary }}
                   />
 
-                  <button
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.accept = ""
-                        fileInputRef.current.click()
-                      }
-                    }}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground active:scale-95"
-                  >
-                    <Paperclip className="h-3.5 w-3.5" />
-                    Attach
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.accept = "image/*"
-                        fileInputRef.current.click()
-                        setTimeout(() => {
-                          if (fileInputRef.current)
-                            fileInputRef.current.accept = ""
-                        }, 500)
-                      }
-                    }}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground active:scale-95"
-                  >
-                    <ImageIcon className="h-3.5 w-3.5" />
-                    Image
-                  </button>
-
-                  {uploadedCount > 0 && (
-                    <span className="ml-auto text-[10px] text-muted-foreground/50">
-                      {uploadedCount} attachment{uploadedCount !== 1 ? "s" : ""}
-                    </span>
+                  {currentTags.length > 0 && (
+                    <div className="flex items-center gap-2 pt-3">
+                      <Tag className="h-3 w-3" style={{ color: C.textMuted }} />
+                      {currentTags.map((tag) => {
+                        const tc = tagColor(tag)
+                        return (
+                          <span
+                            key={tag}
+                            className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                            style={{
+                              background: tc.bg,
+                              color: tc.text,
+                              border: `1px solid ${tc.border}`,
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        )
+                      })}
+                    </div>
                   )}
+
+                  <div
+                    className="mt-5"
+                    style={{ borderTop: `1px solid ${C.border}` }}
+                  />
+                </div>
+
+                {/* ── Textarea — grows to fill remaining space, scrolls internally ── */}
+                <div className="min-h-0 flex-1 px-10">
+                  <textarea
+                    value={content}
+                    onChange={(e) => handleContentChange(e.target.value)}
+                    placeholder={`Start writing…\n\nTip: use #tags to categorize your notes.`}
+                    className="mt-5 h-full w-full resize-none bg-transparent text-[15px] leading-[1.85] outline-none"
+                    style={{ color: C.textPrimary }}
+                  />
+                </div>
+
+                {/* ── Fixed bottom: attachments + toolbar ── */}
+                <div className="shrink-0 px-10 pb-4">
+                  {/* Attachments loading */}
+                  {attachmentsLoading && (
+                    <div
+                      className="mt-4 flex items-center gap-2 text-xs"
+                      style={{ color: C.textMuted }}
+                    >
+                      <Loader2
+                        className="h-3.5 w-3.5 animate-spin"
+                        style={{ color: C.blue }}
+                      />
+                      Loading attachments…
+                    </div>
+                  )}
+
+                  {/* Image gallery */}
+                  {!attachmentsLoading && (
+                    <ImageGallery
+                      images={imageAttachments}
+                      onRemove={removeAttachment}
+                      onOpenLightbox={(i) => setLightboxIndex(i)}
+                    />
+                  )}
+
+                  {/* File chips */}
+                  {!attachmentsLoading && fileAttachments.length > 0 && (
+                    <div className="mt-10">
+                      <p
+                        className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase"
+                        style={{ color: C.textMuted }}
+                      >
+                        <Paperclip
+                          className="h-3 w-3"
+                          style={{ color: C.orange }}
+                        />
+                        Files
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {fileAttachments.map((att) => (
+                          <FileChip
+                            key={att.id}
+                            attachment={att}
+                            onRemove={() => removeAttachment(att.id)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Toolbar */}
+                  <div
+                    className="mt-4 flex items-center gap-1 pt-3"
+                    style={{ borderTop: `1px solid ${C.border}` }}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+
+                    <button
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.accept = ""
+                          fileInputRef.current.click()
+                        }
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-95"
+                      style={{ color: C.textSecondary }}
+                      onMouseEnter={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = C.orangeBg
+                        ;(e.currentTarget as HTMLButtonElement).style.color =
+                          C.orange
+                      }}
+                      onMouseLeave={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "transparent"
+                        ;(e.currentTarget as HTMLButtonElement).style.color =
+                          C.textSecondary
+                      }}
+                    >
+                      <Paperclip className="h-3.5 w-3.5" />
+                      Attach
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.accept = "image/*"
+                          fileInputRef.current.click()
+                          setTimeout(() => {
+                            if (fileInputRef.current)
+                              fileInputRef.current.accept = ""
+                          }, 500)
+                        }
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-95"
+                      style={{ color: C.textSecondary }}
+                      onMouseEnter={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = C.blueBg
+                        ;(e.currentTarget as HTMLButtonElement).style.color =
+                          C.blue
+                      }}
+                      onMouseLeave={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "transparent"
+                        ;(e.currentTarget as HTMLButtonElement).style.color =
+                          C.textSecondary
+                      }}
+                    >
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      Image
+                    </button>
+
+                    {uploadedCount > 0 && (
+                      <span
+                        className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium"
+                        style={{ background: C.greenBg, color: C.green }}
+                      >
+                        {uploadedCount} attachment
+                        {uploadedCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </>
           ) : (
+            /* ── Empty state ── */
             <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
               <EmptyIllustration />
               <div>
-                <p className="text-xl font-semibold text-foreground">
+                <p
+                  className="text-xl font-semibold"
+                  style={{ color: C.textPrimary }}
+                >
                   Write down your ideas
                 </p>
-                <p className="mt-1.5 text-sm text-muted-foreground">
+                <p
+                  className="mt-1.5 text-sm"
+                  style={{ color: C.textSecondary }}
+                >
                   Select a note from the list, or create a new one.
                 </p>
                 <div className="mt-3 flex items-center justify-center gap-2">
-                  {["#ideas", "#to-do's", "#morning"].map((tag) => (
+                  {[
+                    { tag: "#ideas", ...TAG_COLORS[0] },
+                    { tag: "#to-do's", ...TAG_COLORS[2] },
+                    { tag: "#morning", ...TAG_COLORS[1] },
+                  ].map(({ tag, bg, text, border }) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                      className="rounded-full px-3 py-1 text-xs font-semibold"
+                      style={{
+                        background: bg,
+                        color: text,
+                        border: `1px solid ${border}`,
+                      }}
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
               </div>
-              <Button
+              <button
                 onClick={createNote}
-                className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 ease-out hover:opacity-90 hover:shadow-md active:scale-95"
+                className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95"
+                style={{
+                  background: C.blue,
+                  color: "#FFFFFF",
+                  boxShadow: `0 4px 16px ${C.blue}40`,
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.blueDark
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+                    `0 6px 20px ${C.blue}55`
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.blue
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+                    `0 4px 16px ${C.blue}40`
+                }}
               >
                 <Plus className="h-4 w-4" />
                 New note
-              </Button>
+              </button>
             </div>
           )}
         </main>
