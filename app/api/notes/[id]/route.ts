@@ -28,7 +28,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
-  const id = await params.then((p) => p.id)
+  const { id } = await params
   const body = await req.json()
 
   const { data, error } = await supabase
@@ -36,6 +36,7 @@ export async function PUT(
     .update({
       title: body.title,
       content: body.content,
+      folder_id: "folder_id" in body ? body.folder_id : undefined,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

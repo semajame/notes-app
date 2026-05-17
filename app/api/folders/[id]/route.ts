@@ -1,14 +1,13 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import { createClient } from "@/supabase/server"
 
 // GET single note
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
-  // Get logged-in user
   const {
     data: { user },
     error: authError,
@@ -18,10 +17,12 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  const { id } = await context.params
+
   const { data, error } = await supabase
-    .from("notes")
+    .from("folders")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
     .single()
 
@@ -30,7 +31,7 @@ export async function GET(
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Note not found" }, { status: 404 })
+    return NextResponse.json({ error: "Folder not found" }, { status: 404 })
   }
 
   return NextResponse.json(data)
@@ -89,14 +90,14 @@ export async function PUT(
   return NextResponse.json(data)
 }
 
-// DELETE note
+// DELETE folder
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
+  const { id } = await params
 
-  // Get logged-in user
   const {
     data: { user },
     error: authError,
@@ -106,35 +107,26 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  // Get attachment paths before deleting
-  const { data: attachments } = await supabase
-    .from("note_attachments")
-    .select("storage_path")
-    .eq("note_id", params.id)
+  // 1. Move notes out of folder (IMPORTANT)
+  const { error: updateError } = await supabase
+    .from("notes")
+    .update({ folder_id: null })
+    .eq("folder_id", id)
     .eq("user_id", user.id)
 
-  // Delete note
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+
+  // 2. Delete folder
   const { error } = await supabase
-    .from("notes")
+    .from("folders")
     .delete()
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  // Cleanup storage
-  const paths = attachments?.map((a) => a.storage_path).filter(Boolean) ?? []
-
-  if (paths.length > 0) {
-    const { error: storageError } = await supabase.storage
-      .from("attachments")
-      .remove(paths)
-
-    if (storageError) {
-      console.warn("Storage cleanup error:", storageError.message)
-    }
   }
 
   return new NextResponse(null, { status: 204 })

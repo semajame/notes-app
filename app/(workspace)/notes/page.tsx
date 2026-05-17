@@ -1238,100 +1238,6 @@ function NoteCard({
   )
 }
 
-// ─── Folder Assign Popover ────────────────────────────────────────────────────
-
-function FolderAssignMenu({
-  folders,
-  currentFolderId,
-  onAssign,
-  onClose,
-}: {
-  folders: FolderType[]
-  currentFolderId?: string | null
-  onAssign: (folderId: string | null) => void
-  onClose: () => void
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [onClose])
-
-  return (
-    <div
-      ref={ref}
-      className="absolute right-0 bottom-full z-30 mb-2 flex flex-col overflow-hidden rounded-2xl py-1.5 shadow-xl"
-      style={{
-        background: C.cardBg,
-        border: `1px solid ${C.border}`,
-        minWidth: "180px",
-      }}
-    >
-      <p
-        className="px-3 pb-1 text-[10px] font-semibold tracking-widest uppercase"
-        style={{ color: C.textMuted }}
-      >
-        Move to folder
-      </p>
-      <button
-        onClick={() => {
-          onAssign(null)
-          onClose()
-        }}
-        className="flex items-center gap-2 px-3 py-1.5 text-xs transition-all duration-100"
-        style={{
-          color: !currentFolderId ? C.blue : C.textSecondary,
-          background: "transparent",
-        }}
-        onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.background = C.rowHover
-        }}
-        onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.background =
-            "transparent"
-        }}
-      >
-        <Hash className="h-3 w-3 shrink-0" />
-        <span className="flex-1 text-left">All Notes</span>
-        {!currentFolderId && <Check className="h-3 w-3" />}
-      </button>
-      {folders.map((f) => (
-        <button
-          key={f.id}
-          onClick={() => {
-            onAssign(f.id)
-            onClose()
-          }}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs transition-all duration-100"
-          style={{
-            color: currentFolderId === f.id ? C.folder : C.textSecondary,
-            background: "transparent",
-          }}
-          onMouseEnter={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.background =
-              C.rowHover
-          }}
-          onMouseLeave={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.background =
-              "transparent"
-          }}
-        >
-          <Folder
-            className="h-3 w-3 shrink-0"
-            style={{ color: currentFolderId === f.id ? C.folder : C.textMuted }}
-          />
-          <span className="flex-1 truncate text-left">{f.name}</span>
-          {currentFolderId === f.id && <Check className="h-3 w-3" />}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Page() {
@@ -1376,19 +1282,26 @@ export default function Page() {
     }
   }, [])
 
-  const fetchNotes = useCallback(async () => {
-    const res = await fetch("/api/notes")
-    if (res.ok) {
-      const data = await res.json()
-      setNotes(Array.isArray(data) ? data : (data.data ?? data.notes ?? []))
-    }
+  const fetchNotes = async () => {
+    setLoading(true)
+
+    const folderParam =
+      activeFolderId && activeFolderId !== "all"
+        ? `?folderId=${activeFolderId}`
+        : ""
+
+    const res = await fetch(`/api/notes${folderParam}`)
+    const data = await res.json()
+
+    console.log("Fetched notes:", data)
+    setNotes(data)
     setLoading(false)
-  }, [])
+  }
 
   useEffect(() => {
     fetchFolders()
     fetchNotes()
-  }, [fetchFolders, fetchNotes])
+  }, [fetchFolders, activeFolderId])
 
   const fetchAttachments = useCallback(async (noteId: string) => {
     setAttachmentsLoading(true)
@@ -1456,6 +1369,8 @@ export default function Page() {
       body: JSON.stringify({ folder_id: folderId }),
     })
     setSelectedNote((prev) => (prev ? { ...prev, folder_id: folderId } : prev))
+
+    console.log("Assigned note", noteId, "to folder", folderId)
     await fetchNotes()
   }
 
@@ -1530,27 +1445,37 @@ export default function Page() {
 
   const createNote = async () => {
     const folderId = activeFolderId !== "all" ? activeFolderId : null
+
     const res = await fetch("/api/notes", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         title: "New note",
         content: "",
-        user_id: "demo-user",
         folder_id: folderId,
       }),
     })
-    if (res.ok) {
-      const created = await res.json()
-      await fetchNotes()
-      const newNote = created.data ?? created
-      if (newNote?.id) {
-        setSelectedNote(newNote)
-        setTitle(newNote.title ?? "")
-        setContent(newNote.content ?? "")
-        setAttachments([])
-      }
+
+    const created = await res.json()
+
+    if (!res.ok) {
+      console.error(created.error)
+      return
     }
+
+    await fetchNotes()
+
+    const newNote = created // ✅ FIXED
+
+    if (newNote?.id) {
+      setSelectedNote(newNote)
+      setTitle(newNote.title ?? "")
+      setContent(newNote.content ?? "")
+      setAttachments([])
+    }
+    console.log("activeFolderId:", activeFolderId)
   }
 
   const triggerSave = useCallback(
@@ -1977,8 +1902,7 @@ export default function Page() {
 
                   {/* Folder breadcrumb pill */}
                   <div className="relative">
-                    <button
-                      onClick={() => setShowFolderMenu((v) => !v)}
+                    <div
                       className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all duration-150"
                       style={{
                         background: selectedNote.folder_id
@@ -1989,40 +1913,12 @@ export default function Page() {
                           : C.textMuted,
                         border: `1px solid ${selectedNote.folder_id ? C.folder + "44" : C.border}`,
                       }}
-                      onMouseEnter={(e) => {
-                        ;(
-                          e.currentTarget as HTMLButtonElement
-                        ).style.background = C.folderBg
-                        ;(e.currentTarget as HTMLButtonElement).style.color =
-                          C.folderDark
-                      }}
-                      onMouseLeave={(e) => {
-                        ;(
-                          e.currentTarget as HTMLButtonElement
-                        ).style.background = selectedNote.folder_id
-                          ? C.folderBg
-                          : C.border + "88"
-                        ;(e.currentTarget as HTMLButtonElement).style.color =
-                          selectedNote.folder_id ? C.folderDark : C.textMuted
-                      }}
-                      aria-label="Move to folder"
                     >
                       <Folder className="h-3 w-3" />
                       <span>
                         {getFolderName(selectedNote.folder_id) ?? "No folder"}
                       </span>
-                      <ChevronDown className="h-2.5 w-2.5 opacity-60" />
-                    </button>
-                    {showFolderMenu && (
-                      <FolderAssignMenu
-                        folders={folders}
-                        currentFolderId={selectedNote.folder_id}
-                        onAssign={(folderId) =>
-                          assignNoteToFolder(selectedNote.id, folderId)
-                        }
-                        onClose={() => setShowFolderMenu(false)}
-                      />
-                    )}
+                    </div>
                   </div>
                 </div>
 

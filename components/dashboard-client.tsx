@@ -31,20 +31,17 @@ interface Note {
   updated_at?: string
 }
 
-interface FileItem {
-  id: string
-  name: string
-  size?: number
-  type?: string
-  created_at: string
-  updated_at?: string
-}
-
 interface Props {
   notes: Note[]
-  files: FileItem[]
+  folders: {
+    id: string
+    name: string
+    created_at?: string
+    updated_at?: string
+  }[]
+
   notesError: string | null
-  filesError: string | null
+  foldersError: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,19 +86,6 @@ function groupByDay(items: { created_at: string }[]) {
     counts[d.getDay()] = (counts[d.getDay()] ?? 0) + 1
   })
   return DAYS.map((label, i) => ({ label, count: counts[i] ?? 0 }))
-}
-
-function totalSize(files: FileItem[]) {
-  const bytes = files.reduce((sum, f) => sum + (f.size ?? 0), 0)
-  if (bytes === 0) return "0 B"
-  const units = ["B", "KB", "MB", "GB"]
-  let i = 0
-  let val = bytes
-  while (val >= 1024 && i < units.length - 1) {
-    val /= 1024
-    i++
-  }
-  return `${val.toFixed(1)} ${units[i]}`
 }
 
 function createdToday(items: { created_at: string }[]) {
@@ -268,12 +252,13 @@ const axisTickStyle = { fontSize: 11, fill: "#999" }
 
 export function DashboardClient({
   notes,
-  files,
+  folders,
+
   notesError,
-  filesError,
+  foldersError,
 }: Props) {
   const notesByMonth = useMemo(() => groupByMonth(notes), [notes])
-  const filesByDay = useMemo(() => groupByDay(files), [files])
+
   const notesByDay = useMemo(() => groupByDay(notes), [notes])
 
   const recentNotes = useMemo(
@@ -287,21 +272,20 @@ export function DashboardClient({
     [notes]
   )
 
-  const recentFiles = useMemo(
-    () =>
-      [...files]
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-        .slice(0, 8),
-    [files]
-  )
-
   const notesThisWeek = useMemo(() => createdThisWeek(notes), [notes])
   const notesToday = useMemo(() => createdToday(notes), [notes])
-  const filesToday = useMemo(() => createdToday(files), [files])
-  const storage = useMemo(() => totalSize(files), [files])
+
+  const recentFolders = useMemo(
+    () =>
+      [...folders]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at ?? "").getTime() -
+            new Date(a.created_at ?? "").getTime()
+        )
+        .slice(0, 8),
+    [folders]
+  )
 
   const lastNoteTime = useMemo(() => {
     if (!notes.length) return null
@@ -312,16 +296,6 @@ export function DashboardClient({
         : latest
     )
   }, [notes])
-
-  const lastFileTime = useMemo(() => {
-    if (!files.length) return null
-    return files.reduce((latest, f) =>
-      new Date(f.updated_at ?? f.created_at) >
-      new Date(latest.updated_at ?? latest.created_at)
-        ? f
-        : latest
-    )
-  }, [files])
 
   // Stat card accent colors from the landing palette
   const statCards = [
@@ -334,15 +308,17 @@ export function DashboardClient({
       accent: "#5B9FE8",
       accentBg: "#5B9FE820",
     },
+
     {
-      label: "Total Files",
-      value: files.length.toLocaleString(),
-      sub: `${filesToday} uploaded today`,
-      positive: filesToday > 0 ? true : null,
+      label: "Total Folders",
+      value: folders.length.toLocaleString(),
+      sub: "folders created",
+      positive: folders.length > 0 ? true : null,
       icon: <FolderOpen className="h-5 w-5" />,
-      accent: "#4CAF72",
-      accentBg: "#4CAF7220",
+      accent: "#FF9F43",
+      accentBg: "#FF9F4314",
     },
+
     {
       label: "This Week",
       value: notesThisWeek,
@@ -351,15 +327,6 @@ export function DashboardClient({
       icon: <TrendingUp className="h-5 w-5" />,
       accent: "#F5C842",
       accentBg: "#F5C84220",
-    },
-    {
-      label: "Storage Used",
-      value: storage,
-      sub: `across ${files.length} files`,
-      positive: null,
-      icon: <HardDrive className="h-5 w-5" />,
-      accent: "#FF9F43",
-      accentBg: "#FF9F4320",
     },
   ]
 
@@ -375,10 +342,10 @@ export function DashboardClient({
     <div className="space-y-6" style={{ background: "#FAFAF8" }}>
       {/* ── Error banners ─────────────────────────────────────── */}
       {notesError && <ErrorBanner message={notesError} />}
-      {filesError && <ErrorBanner message={filesError} />}
+      {foldersError && <ErrorBanner message={foldersError} />}
 
       {/* ── Stat cards ────────────────────────────────────────── */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((card, i) => (
           <div
             key={card.label}
@@ -395,7 +362,7 @@ export function DashboardClient({
       </div>
 
       {/* ── Charts row ────────────────────────────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Notes by month — bar */}
         <div
           className="animate-in p-5 fade-in slide-in-from-bottom-2"
@@ -455,70 +422,6 @@ export function DashboardClient({
               updated{" "}
               {formatRelative(
                 lastNoteTime.updated_at ?? lastNoteTime.created_at
-              )}
-            </p>
-          )}
-        </div>
-
-        {/* Files by day — line */}
-        <div
-          className="animate-in p-5 fade-in slide-in-from-bottom-2"
-          style={{
-            ...cardStyle,
-            animationDelay: "300ms",
-            animationDuration: "300ms",
-            animationFillMode: "both",
-          }}
-        >
-          <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
-            File Uploads
-          </p>
-          <p className="mt-0.5 text-xs" style={{ color: "#888" }}>
-            By day of week
-          </p>
-          <div className="mt-4 h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={filesByDay}>
-                <CartesianGrid
-                  stroke="#E8E6DF"
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="label"
-                  tick={axisTickStyle}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={axisTickStyle}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                  width={24}
-                />
-                <Tooltip content={<ChartTooltip />} />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  name="files"
-                  stroke="#4CAF72"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "#4CAF72", strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: "#2E8B50" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          {lastFileTime && (
-            <p
-              className="mt-3 flex items-center gap-1.5 text-xs"
-              style={{ color: "#999" }}
-            >
-              <Clock className="h-3 w-3" />
-              updated{" "}
-              {formatRelative(
-                lastFileTime.updated_at ?? lastFileTime.created_at
               )}
             </p>
           )}
@@ -668,7 +571,7 @@ export function DashboardClient({
           )}
         </div>
 
-        {/* Recent Files */}
+        {/* Recent Folders */}
         <div style={cardStyle}>
           <div
             className="flex items-center justify-between px-5 py-3.5"
@@ -676,37 +579,39 @@ export function DashboardClient({
           >
             <div>
               <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
-                Recent Files
+                Recent Folders
               </p>
               <p className="text-xs" style={{ color: "#888" }}>
-                Latest uploads
+                Most recently created
               </p>
             </div>
             <span
               className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              style={{ background: "#4CAF7220", color: "#4CAF72" }}
+              style={{ background: "#5B9FE820", color: "#5B9FE8" }}
             >
-              {files.length}
+              {folders.length}
             </span>
           </div>
 
-          {filesError ? (
+          {foldersError ? (
             <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
-              Failed to load files.
+              Failed to load folders.
             </p>
-          ) : recentFiles.length === 0 ? (
+          ) : recentFolders.length === 0 ? (
             <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
-              No files yet.
+              No folders yet.
             </p>
           ) : (
             <ul>
-              {recentFiles.map((file, i) => (
+              {recentFolders.map((folder, i) => (
                 <li
-                  key={file.id}
+                  key={folder.id}
                   className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150"
                   style={{
                     borderBottom:
-                      i < recentFiles.length - 1 ? "1px solid #E8E6DF" : "none",
+                      i < recentFolders.length - 1
+                        ? "1px solid #E8E6DF"
+                        : "none",
                   }}
                   onMouseEnter={(e) => {
                     ;(e.currentTarget as HTMLLIElement).style.background =
@@ -720,29 +625,24 @@ export function DashboardClient({
                   <div className="flex min-w-0 items-center gap-3">
                     <div
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: "#4CAF7220" }}
+                      style={{ background: "#FF9F4314" }}
                     >
                       <FolderOpen
                         className="h-3.5 w-3.5"
-                        style={{ color: "#4CAF72" }}
+                        style={{ color: "#E8902E" }}
                       />
                     </div>
-                    <div className="min-w-0">
-                      <p
-                        className="truncate text-sm font-medium"
-                        style={{ color: "#1a1a1a" }}
-                      >
-                        {file.name || "Unnamed file"}
-                      </p>
-                      {file.size != null && (
-                        <p className="text-xs" style={{ color: "#999" }}>
-                          {totalSize([file])}
-                        </p>
-                      )}
-                    </div>
+                    <p
+                      className="truncate text-sm font-medium"
+                      style={{ color: "#1a1a1a" }}
+                    >
+                      {folder.name || "Untitled Folder"}
+                    </p>
                   </div>
                   <span className="shrink-0 text-xs" style={{ color: "#999" }}>
-                    {formatRelative(file.updated_at ?? file.created_at)}
+                    {folder.created_at
+                      ? formatRelative(folder.created_at)
+                      : "unknown"}
                   </span>
                 </li>
               ))}

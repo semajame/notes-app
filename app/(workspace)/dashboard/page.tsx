@@ -23,20 +23,19 @@ interface Note {
   updated_at?: string
 }
 
-interface FileItem {
+interface Folder {
   id: string
   name: string
-  size?: number
-  type?: string
-  created_at: string
+  created_at?: string
   updated_at?: string
 }
 
 interface DashboardData {
   notes: Note[]
-  files: FileItem[]
+  folders: Folder[]
+
   notesError: string | null
-  filesError: string | null
+  foldersError: string | null
 }
 
 // ─── Data Fetching ─────────────────────────────────────────────────────────────
@@ -45,23 +44,23 @@ async function getDashboardData(
 ): Promise<DashboardData> {
   const [
     { data: notes, error: notesError },
-    { data: files, error: filesError },
+    { data: folders, error: foldersError },
   ] = await Promise.all([
     supabase
       .from("notes")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("files")
+      .from("folders")
       .select("*")
       .order("created_at", { ascending: false }),
   ])
 
   return {
     notes: notes ?? [],
-    files: files ?? [],
+    folders: folders ?? [],
     notesError: notesError?.message ?? null,
-    filesError: filesError?.message ?? null,
+    foldersError: foldersError?.message ?? null,
   }
 }
 
