@@ -18,6 +18,13 @@ import {
   ZoomIn,
   File,
   ExternalLink,
+  Folder,
+  FolderOpen,
+  ChevronDown,
+  ChevronRight as ChevronRightIcon,
+  FolderPlus,
+  Check,
+  Hash,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,57 +40,43 @@ import {
 } from "@/components/ui/alert-dialog"
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
-// All colors sourced from the landing page palette — no shadcn CSS vars.
 
 const C = {
-  // Surfaces
   pageBg: "#FAFAF8",
   sidebarBg: "#F4F2EC",
   cardBg: "#FFFFFF",
   editorBg: "#FFFFFF",
-
-  // Borders
   border: "#E8E6DF",
   borderStrong: "#C8C4BC",
-
-  // Text
   textPrimary: "#1a1a1a",
   textSecondary: "#777",
   textMuted: "#999",
   textPlaceholder: "#C8C4BC",
-
-  // Accent — Blue (notes, primary actions)
   blue: "#5B9FE8",
   blueDark: "#4A8FD8",
   blueBg: "#5B9FE814",
   blueBgHover: "#5B9FE824",
-
-  // Accent — Green (files, success)
   green: "#4CAF72",
   greenDark: "#2E8B50",
   greenBg: "#4CAF7214",
-
-  // Accent — Gold (tags, week)
   gold: "#F5C842",
   goldDark: "#D4A820",
   goldBg: "#F5C84218",
-
-  // Accent — Orange (attach, storage)
   orange: "#FF9F43",
   orangeDark: "#E8902E",
   orangeBg: "#FF9F4318",
-
-  // Accent — Red (destructive)
   red: "#FF6B6B",
   redDark: "#FF6060",
   redBg: "#FF6B6B14",
-
-  // Hover tint
   rowHover: "#F4F2EC",
   mutedHover: "#EDEAE2",
+  // Folder accent — a warm olive/sage that fits the off-white palette
+  folder: "#7E9E7E",
+  folderDark: "#5F7A5F",
+  folderBg: "#7E9E7E18",
+  folderActive: "#EDF2ED",
 } as const
 
-// Tag colors — cycling through the palette for variety
 const TAG_COLORS = [
   { bg: "#5B9FE814", text: "#4A8FD8", border: "#5B9FE830" },
   { bg: "#4CAF7214", text: "#2E8B50", border: "#4CAF7230" },
@@ -101,12 +94,20 @@ function tagColor(tag: string) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type FolderType = {
+  id: string
+  name: string
+  created_at?: string
+  updated_at?: string
+}
+
 type Note = {
   id: string
   title: string
   content: string | null
   created_at?: string
   updated_at?: string
+  folder_id?: string | null
 }
 
 type Attachment = {
@@ -301,7 +302,6 @@ function Lightbox({
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
   const [imgKey, setImgKey] = useState(0)
-
   const current = images[idx]
 
   useEffect(() => {
@@ -319,7 +319,6 @@ function Lightbox({
     setIdx((i) => (i - 1 + images.length) % images.length)
     setImgKey((k) => k + 1)
   }, [images.length])
-
   const next = useCallback(() => {
     setIdx((i) => (i + 1) % images.length)
     setImgKey((k) => k + 1)
@@ -336,7 +335,6 @@ function Lightbox({
   }, [handleClose, prev, next])
 
   if (!current) return null
-
   const open = visible && !closing
 
   return (
@@ -362,7 +360,6 @@ function Lightbox({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top bar */}
         <div
           className="flex items-center justify-between px-4 py-3"
           style={{ borderBottom: `1px solid ${C.border}` }}
@@ -422,8 +419,6 @@ function Lightbox({
             </button>
           </div>
         </div>
-
-        {/* Image */}
         <div
           className="flex flex-1 items-center justify-center overflow-hidden p-4"
           style={{ background: C.sidebarBg }}
@@ -440,8 +435,6 @@ function Lightbox({
             }}
           />
         </div>
-
-        {/* Nav */}
         {images.length > 1 && (
           <>
             <button
@@ -476,7 +469,6 @@ function Lightbox({
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-
             <div
               className="flex items-center justify-center gap-1.5 py-3"
               style={{ background: C.cardBg }}
@@ -501,13 +493,7 @@ function Lightbox({
           </>
         )}
       </div>
-
-      <style>{`
-        @keyframes lightbox-img-in {
-          from { opacity: 0; transform: scale(0.97); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
+      <style>{`@keyframes lightbox-img-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }`}</style>
     </div>
   )
 }
@@ -524,7 +510,6 @@ function ImageGallery({
   onOpenLightbox: (index: number) => void
 }) {
   if (images.length === 0) return null
-
   return (
     <div className="mt-10">
       <p
@@ -607,13 +592,7 @@ function ImageGallery({
           </div>
         ))}
       </div>
-
-      <style>{`
-        @keyframes gallery-thumb-in {
-          from { opacity: 0; transform: translateY(10px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
+      <style>{`@keyframes gallery-thumb-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
     </div>
   )
 }
@@ -652,7 +631,6 @@ function FileChip({
           />
         )}
       </div>
-
       <div className="min-w-0 flex-1">
         <p className="max-w-[140px] truncate leading-tight font-medium">
           {attachment.name}
@@ -668,14 +646,12 @@ function FileChip({
               : formatBytes(attachment.size)}
         </p>
       </div>
-
       {!attachment.uploading && !attachment.error && (
         <ExternalLink
           className="h-3 w-3 shrink-0"
           style={{ color: C.textMuted }}
         />
       )}
-
       <button
         onClick={(e) => {
           e.preventDefault()
@@ -699,7 +675,6 @@ function FileChip({
       </button>
     </div>
   )
-
   if (!attachment.uploading && !attachment.error && attachment.url) {
     return (
       <a
@@ -712,21 +687,379 @@ function FileChip({
       </a>
     )
   }
-
   return inner
 }
 
+// ─── Folder Row ───────────────────────────────────────────────────────────────
+
+interface FolderRowProps {
+  folder: FolderType
+  noteCount: number
+  isActive: boolean
+  isOpen: boolean
+  onSelect: () => void
+  onToggle: () => void
+  onRename: (newName: string) => void
+  onDelete: () => void
+}
+
+function FolderRow({
+  folder,
+  noteCount,
+  isActive,
+  isOpen,
+  onSelect,
+  onToggle,
+  onRename,
+  onDelete,
+}: FolderRowProps) {
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState(folder.name)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const startEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditValue(folder.name)
+    setEditing(true)
+    setTimeout(() => inputRef.current?.select(), 0)
+  }
+
+  const commitEdit = () => {
+    const trimmed = editValue.trim()
+
+    if (!trimmed) {
+      setEditValue(folder.name)
+      setEditing(false)
+      return
+    }
+
+    if (trimmed !== folder.name) {
+      onRename(trimmed)
+    }
+
+    setEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commitEdit()
+    if (e.key === "Escape") {
+      setEditing(false)
+      setEditValue(folder.name)
+    }
+  }
+
+  return (
+    <div
+      className="group flex cursor-pointer items-center gap-1.5 rounded-xl px-2 py-1.5 transition-all duration-150 select-none"
+      style={{
+        background: isActive ? C.folderActive : "transparent",
+        border: isActive ? `1px solid ${C.folder}22` : "1px solid transparent",
+      }}
+      onClick={onSelect}
+    >
+      {/* Expand/collapse chevron */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggle()
+        }}
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md transition-all duration-150"
+        style={{ color: C.textMuted }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLButtonElement).style.background =
+            C.mutedHover
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLButtonElement).style.background =
+            "transparent"
+        }}
+        aria-label={isOpen ? "Collapse folder" : "Expand folder"}
+      >
+        <ChevronDown
+          className="h-3 w-3 transition-transform duration-200"
+          style={{
+            transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
+            color: isActive ? C.folder : C.textMuted,
+          }}
+        />
+      </button>
+
+      {/* Folder icon */}
+      <div className="shrink-0">
+        {isOpen ? (
+          <FolderOpen
+            className="h-3.5 w-3.5"
+            style={{ color: isActive ? C.folder : C.textSecondary }}
+          />
+        ) : (
+          <Folder
+            className="h-3.5 w-3.5"
+            style={{ color: isActive ? C.folder : C.textSecondary }}
+          />
+        )}
+      </div>
+
+      {/* Name / inline edit */}
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          className="min-w-0 flex-1 rounded-md bg-white px-1.5 py-0.5 text-xs outline-none"
+          style={{
+            border: `1px solid ${C.folder}66`,
+            color: C.textPrimary,
+            fontSize: "12px",
+          }}
+          autoFocus
+        />
+      ) : (
+        <span
+          className="min-w-0 flex-1 truncate text-xs leading-tight font-medium"
+          style={{ color: isActive ? C.textPrimary : C.textSecondary }}
+          onDoubleClick={startEdit}
+        >
+          {folder.name}
+        </span>
+      )}
+
+      {/* Note count badge */}
+      {!editing && (
+        <span
+          className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-all duration-150"
+          style={{
+            background: isActive ? `${C.folder}20` : C.border,
+            color: isActive ? C.folderDark : C.textMuted,
+            minWidth: "18px",
+            textAlign: "center",
+          }}
+        >
+          {noteCount}
+        </span>
+      )}
+
+      {/* Actions — visible on hover */}
+      {!editing && (
+        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          <button
+            onClick={startEdit}
+            className="flex h-5 w-5 items-center justify-center rounded-md transition-all duration-150"
+            style={{ color: C.textMuted }}
+            onMouseEnter={(e) => {
+              ;(e.currentTarget as HTMLButtonElement).style.background =
+                C.blueBg
+              ;(e.currentTarget as HTMLButtonElement).style.color = C.blue
+            }}
+            onMouseLeave={(e) => {
+              ;(e.currentTarget as HTMLButtonElement).style.background =
+                "transparent"
+              ;(e.currentTarget as HTMLButtonElement).style.color = C.textMuted
+            }}
+            aria-label="Rename folder"
+            title="Rename"
+          >
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M11.5 2.5l2 2L4 14l-2.5.5.5-2.5L11.5 2.5z" />
+            </svg>
+          </button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="flex h-5 w-5 items-center justify-center rounded-md transition-all duration-150"
+                style={{ color: C.textMuted }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.redBg
+                  ;(e.currentTarget as HTMLButtonElement).style.color = C.red
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    "transparent"
+                  ;(e.currentTarget as HTMLButtonElement).style.color =
+                    C.textMuted
+                }}
+                aria-label="Delete folder"
+                title="Delete folder"
+              >
+                <Trash2 className="h-2.5 w-2.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent
+              style={{ background: C.cardBg, border: `1px solid ${C.border}` }}
+            >
+              <AlertDialogHeader>
+                <AlertDialogTitle style={{ color: C.textPrimary }}>
+                  Delete "{folder.name}"?
+                </AlertDialogTitle>
+                <AlertDialogDescription style={{ color: C.textSecondary }}>
+                  The folder will be deleted. Notes inside it will be moved to
+                  All Notes and not deleted.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  style={{ borderColor: C.border, color: C.textSecondary }}
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-95"
+                  style={{
+                    border: `1px solid ${C.border}`,
+                    color: C.textSecondary,
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      C.redBg
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      C.red + "55"
+                    ;(e.currentTarget as HTMLButtonElement).style.color = C.red
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      "transparent"
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      C.border
+                    ;(e.currentTarget as HTMLButtonElement).style.color =
+                      C.textSecondary
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NewFolderInput({
+  onCommit,
+  onCancel,
+}: {
+  onCommit: (name: string) => void
+  onCancel: () => void
+}) {
+  const [value, setValue] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const commit = () => {
+    const trimmed = value.trim()
+
+    if (!trimmed) {
+      onCancel()
+      return
+    }
+
+    onCommit(trimmed)
+  }
+
+  return (
+    <div
+      className="flex items-center gap-1.5 rounded-xl px-2 py-1.5"
+      style={{
+        background: C.folderActive,
+        border: `1px solid ${C.folder}33`,
+      }}
+    >
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center">
+        <FolderPlus className="h-3.5 w-3.5" style={{ color: C.folder }} />
+      </div>
+
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+            commit()
+          }
+
+          if (e.key === "Escape") {
+            e.preventDefault()
+            onCancel()
+          }
+        }}
+        onBlur={() => {
+          if (!value.trim()) {
+            onCancel()
+          } else {
+            commit()
+          }
+        }}
+        placeholder="Folder name..."
+        className="min-w-0 flex-1 rounded-md bg-white px-1.5 py-0.5 text-xs outline-none"
+        style={{
+          border: `1px solid ${C.folder}55`,
+          color: C.textPrimary,
+          fontSize: "12px",
+        }}
+      />
+
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault()
+        }}
+        onClick={commit}
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md transition-all"
+        style={{
+          background: C.folder,
+          color: "#fff",
+        }}
+        aria-label="Create folder"
+      >
+        <Check className="h-3 w-3" />
+      </button>
+    </div>
+  )
+}
 // ─── Note Card ────────────────────────────────────────────────────────────────
 
 interface NoteCardProps {
   note: Note
   active: boolean
   compact: boolean
+  folderName?: string
   onClick: () => void
   onDelete: (e: React.MouseEvent) => void
 }
 
-function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
+function NoteCard({
+  note,
+  active,
+  compact,
+  folderName,
+  onClick,
+  onDelete,
+}: NoteCardProps) {
   const tags = extractTags(note.content)
 
   return (
@@ -846,6 +1179,23 @@ function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
 
       {!compact && (
         <>
+          {/* Folder badge — shown when in All Notes view */}
+          {folderName && (
+            <div className="mt-1.5 flex items-center gap-1">
+              <Folder
+                className="h-2.5 w-2.5 shrink-0"
+                style={{ color: active ? "rgba(255,255,255,0.55)" : C.folder }}
+              />
+              <span
+                className="truncate text-[10px] font-medium"
+                style={{
+                  color: active ? "rgba(255,255,255,0.55)" : C.folderDark,
+                }}
+              >
+                {folderName}
+              </span>
+            </div>
+          )}
           {tags.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
               {tags.map((tag) => {
@@ -888,10 +1238,105 @@ function NoteCard({ note, active, compact, onClick, onDelete }: NoteCardProps) {
   )
 }
 
+// ─── Folder Assign Popover ────────────────────────────────────────────────────
+
+function FolderAssignMenu({
+  folders,
+  currentFolderId,
+  onAssign,
+  onClose,
+}: {
+  folders: FolderType[]
+  currentFolderId?: string | null
+  onAssign: (folderId: string | null) => void
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [onClose])
+
+  return (
+    <div
+      ref={ref}
+      className="absolute right-0 bottom-full z-30 mb-2 flex flex-col overflow-hidden rounded-2xl py-1.5 shadow-xl"
+      style={{
+        background: C.cardBg,
+        border: `1px solid ${C.border}`,
+        minWidth: "180px",
+      }}
+    >
+      <p
+        className="px-3 pb-1 text-[10px] font-semibold tracking-widest uppercase"
+        style={{ color: C.textMuted }}
+      >
+        Move to folder
+      </p>
+      <button
+        onClick={() => {
+          onAssign(null)
+          onClose()
+        }}
+        className="flex items-center gap-2 px-3 py-1.5 text-xs transition-all duration-100"
+        style={{
+          color: !currentFolderId ? C.blue : C.textSecondary,
+          background: "transparent",
+        }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLButtonElement).style.background = C.rowHover
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLButtonElement).style.background =
+            "transparent"
+        }}
+      >
+        <Hash className="h-3 w-3 shrink-0" />
+        <span className="flex-1 text-left">All Notes</span>
+        {!currentFolderId && <Check className="h-3 w-3" />}
+      </button>
+      {folders.map((f) => (
+        <button
+          key={f.id}
+          onClick={() => {
+            onAssign(f.id)
+            onClose()
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs transition-all duration-100"
+          style={{
+            color: currentFolderId === f.id ? C.folder : C.textSecondary,
+            background: "transparent",
+          }}
+          onMouseEnter={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.background =
+              C.rowHover
+          }}
+          onMouseLeave={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.background =
+              "transparent"
+          }}
+        >
+          <Folder
+            className="h-3 w-3 shrink-0"
+            style={{ color: currentFolderId === f.id ? C.folder : C.textMuted }}
+          />
+          <span className="flex-1 truncate text-left">{f.name}</span>
+          {currentFolderId === f.id && <Check className="h-3 w-3" />}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Page() {
   const [notes, setNotes] = useState<Note[]>([])
+  const [folders, setFolders] = useState<FolderType[]>([])
   const [selectedNote, setSelectedNote] = useState<Note | null>(null)
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -901,16 +1346,49 @@ export default function Page() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [compact, setCompact] = useState(false)
 
+  // Folder UI state
+  const [activeFolderId, setActiveFolderId] = useState<string | null | "all">(
+    "all"
+  )
+  const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(new Set())
+  const [creatingFolder, setCreatingFolder] = useState(false)
+  const [showFolderMenu, setShowFolderMenu] = useState(false)
+
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [attachmentsLoading, setAttachmentsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const imageAttachments = attachments.filter(
     (a) => isImage(a.mime_type) && !a.error
   )
   const fileAttachments = attachments.filter((a) => !isImage(a.mime_type))
+
+  // ── Fetch helpers ──
+
+  const fetchFolders = useCallback(async () => {
+    const res = await fetch("/api/folders")
+    if (res.ok) {
+      const data = await res.json()
+
+      console.log("Fetched folders:", data)
+      setFolders(Array.isArray(data) ? data : (data.data ?? []))
+    }
+  }, [])
+
+  const fetchNotes = useCallback(async () => {
+    const res = await fetch("/api/notes")
+    if (res.ok) {
+      const data = await res.json()
+      setNotes(Array.isArray(data) ? data : (data.data ?? data.notes ?? []))
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    fetchFolders()
+    fetchNotes()
+  }, [fetchFolders, fetchNotes])
 
   const fetchAttachments = useCallback(async (noteId: string) => {
     setAttachmentsLoading(true)
@@ -921,20 +1399,74 @@ export default function Page() {
         setAttachments(Array.isArray(data) ? data : [])
       }
     } catch {
-      // silent
     } finally {
       setAttachmentsLoading(false)
     }
   }, [])
 
+  // ── Folder CRUD ──
+
+  const createFolder = async (name: string) => {
+    const res = await fetch("/api/folders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    })
+    if (res.ok) {
+      const created = await res.json()
+      const folder: FolderType = created.data ?? created
+      await fetchFolders()
+      if (folder?.id) {
+        setActiveFolderId(folder.id)
+        setOpenFolderIds((prev) => new Set([...prev, folder.id]))
+      }
+    }
+  }
+
+  const renameFolder = async (id: string, name: string) => {
+    if (!id || !name?.trim()) return
+
+    await fetch(`/api/folders/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+      }),
+    })
+
+    await fetchFolders()
+  }
+
+  const deleteFolder = async (id: string) => {
+    await fetch(`/api/folders/${id}`, { method: "DELETE" })
+    if (activeFolderId === id) setActiveFolderId("all")
+    await fetchFolders()
+    await fetchNotes()
+  }
+
+  const assignNoteToFolder = async (
+    noteId: string,
+    folderId: string | null
+  ) => {
+    await fetch(`/api/notes/${noteId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder_id: folderId }),
+    })
+    setSelectedNote((prev) => (prev ? { ...prev, folder_id: folderId } : prev))
+    await fetchNotes()
+  }
+
+  // ── Note CRUD ──
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
     if (!files.length || !selectedNote) return
-
     for (const file of files) {
       const tempId = crypto.randomUUID()
       const objectUrl = URL.createObjectURL(file)
-
       setAttachments((prev) => [
         ...prev,
         {
@@ -946,10 +1478,8 @@ export default function Page() {
           uploading: true,
         },
       ])
-
       const form = new FormData()
       form.append("file", file)
-
       try {
         const res = await fetch(`/api/notes/${selectedNote.id}/attachments`, {
           method: "POST",
@@ -994,26 +1524,12 @@ export default function Page() {
           `/api/notes/${selectedNote.id}/attachments?attachmentId=${id}`,
           { method: "DELETE" }
         )
-      } catch {
-        /* best effort */
-      }
+      } catch {}
     }
   }
 
-  const fetchNotes = useCallback(async () => {
-    const res = await fetch("/api/notes")
-    if (res.ok) {
-      const data = await res.json()
-      setNotes(Array.isArray(data) ? data : (data.data ?? data.notes ?? []))
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    fetchNotes()
-  }, [fetchNotes])
-
   const createNote = async () => {
+    const folderId = activeFolderId !== "all" ? activeFolderId : null
     const res = await fetch("/api/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1021,6 +1537,7 @@ export default function Page() {
         title: "New note",
         content: "",
         user_id: "demo-user",
+        folder_id: folderId,
       }),
     })
     if (res.ok) {
@@ -1057,7 +1574,6 @@ export default function Page() {
     setTitle(v)
     if (selectedNote) triggerSave(selectedNote.id, v, content)
   }
-
   const handleContentChange = (v: string) => {
     setContent(v)
     if (selectedNote) triggerSave(selectedNote.id, title, v)
@@ -1082,7 +1598,14 @@ export default function Page() {
     fetchAttachments(note.id)
   }
 
-  const filtered = notes.filter((n) => {
+  // ── Derived data ──
+
+  const notesInActiveFolder = notes.filter((n) => {
+    if (activeFolderId === "all") return true
+    return n.folder_id === activeFolderId
+  })
+
+  const filtered = notesInActiveFolder.filter((n) => {
     const q = search.toLowerCase()
     return (
       n.title.toLowerCase().includes(q) ||
@@ -1090,10 +1613,30 @@ export default function Page() {
     )
   })
 
+  const noteCountByFolder = (folderId: string) =>
+    notes.filter((n) => n.folder_id === folderId).length
+  const getFolderName = (folderId?: string | null) =>
+    folders.find((f) => f.id === folderId)?.name
+
   const currentTags = extractTags(content)
   const uploadedCount = attachments.filter(
     (a) => !a.error && !a.uploading
   ).length
+
+  const toggleFolder = (id: string) => {
+    setOpenFolderIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  // ── Active folder label ──
+  const activeFolderLabel =
+    activeFolderId === "all"
+      ? "All Notes"
+      : (folders.find((f) => f.id === activeFolderId)?.name ?? "Notes")
 
   return (
     <>
@@ -1126,7 +1669,6 @@ export default function Page() {
               Notes
             </h1>
             <div className="flex items-center gap-1.5">
-              {/* View toggle */}
               <button
                 onClick={() => setCompact((v) => !v)}
                 className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
@@ -1157,8 +1699,6 @@ export default function Page() {
                   <LayoutList className="h-3.5 w-3.5" />
                 )}
               </button>
-
-              {/* New note */}
               <button
                 onClick={createNote}
                 className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
@@ -1187,7 +1727,7 @@ export default function Page() {
           </div>
 
           {/* Search */}
-          <div className="px-3 pb-2">
+          <div className="px-3 pb-3">
             <div
               className="flex items-center gap-2 rounded-xl px-3 py-2"
               style={{ background: C.cardBg, border: `1px solid ${C.border}` }}
@@ -1213,6 +1753,137 @@ export default function Page() {
             </div>
           </div>
 
+          {/* ── Folders section ── */}
+          <div className="shrink-0 px-3 pb-2">
+            {/* Section header */}
+            <div className="mb-1 flex items-center justify-between">
+              <span
+                className="text-[10px] font-semibold tracking-widest uppercase"
+                style={{ color: C.textMuted }}
+              >
+                Folders
+              </span>
+              <button
+                onClick={() => setCreatingFolder(true)}
+                className="flex h-5 w-5 items-center justify-center rounded-md transition-all duration-150"
+                style={{ color: C.textMuted }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    C.folderBg
+                  ;(e.currentTarget as HTMLButtonElement).style.color = C.folder
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background =
+                    "transparent"
+                  ;(e.currentTarget as HTMLButtonElement).style.color =
+                    C.textMuted
+                }}
+                aria-label="New folder"
+                title="New folder"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* All Notes row */}
+            <button
+              onClick={() => setActiveFolderId("all")}
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-all duration-150"
+              style={{
+                background:
+                  activeFolderId === "all" ? C.folderActive : "transparent",
+                border:
+                  activeFolderId === "all"
+                    ? `1px solid ${C.folder}22`
+                    : "1px solid transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (activeFolderId !== "all")
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    C.mutedHover
+              }}
+              onMouseLeave={(e) => {
+                if (activeFolderId !== "all")
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    "transparent"
+              }}
+            >
+              <Hash
+                className="h-3.5 w-3.5 shrink-0"
+                style={{
+                  color: activeFolderId === "all" ? C.folder : C.textMuted,
+                }}
+              />
+              <span
+                className="flex-1 text-xs font-medium"
+                style={{
+                  color:
+                    activeFolderId === "all" ? C.textPrimary : C.textSecondary,
+                }}
+              >
+                All Notes
+              </span>
+              <span
+                className="rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+                style={{
+                  background:
+                    activeFolderId === "all" ? `${C.folder}20` : C.border,
+                  color: activeFolderId === "all" ? C.folderDark : C.textMuted,
+                  minWidth: "18px",
+                  textAlign: "center",
+                }}
+              >
+                {notes.length}
+              </span>
+            </button>
+
+            {/* Folder rows */}
+            <div className="mt-0.5 flex flex-col gap-0.5">
+              {folders.map((folder) => (
+                <FolderRow
+                  key={folder.id}
+                  folder={folder}
+                  noteCount={noteCountByFolder(folder.id)}
+                  isActive={activeFolderId === folder.id}
+                  isOpen={openFolderIds.has(folder.id)}
+                  onSelect={() => {
+                    setActiveFolderId(folder.id)
+                    setOpenFolderIds((prev) => new Set([...prev, folder.id]))
+                  }}
+                  onToggle={() => toggleFolder(folder.id)}
+                  onRename={(name) => renameFolder(folder.id, name)}
+                  onDelete={() => deleteFolder(folder.id)}
+                />
+              ))}
+            </div>
+
+            {/* New folder input */}
+            {creatingFolder && (
+              <div className="mt-0.5">
+                <NewFolderInput
+                  onCommit={(name) => {
+                    createFolder(name)
+                    setCreatingFolder(false)
+                  }}
+                  onCancel={() => setCreatingFolder(false)}
+                />
+              </div>
+            )}
+
+            {/* Divider */}
+            <div
+              className="mt-3 mb-1"
+              style={{ borderTop: `1px solid ${C.border}` }}
+            />
+            {/* Active folder label above note list */}
+            <p
+              className="text-[10px] font-semibold tracking-widest uppercase"
+              style={{ color: C.textMuted }}
+            >
+              {activeFolderLabel}
+            </p>
+          </div>
+
           {/* Note list */}
           <div className="min-h-0 flex-1">
             <div className="h-full space-y-1.5 overflow-y-auto px-3 pb-4">
@@ -1228,14 +1899,29 @@ export default function Page() {
                   />
                 ))
               ) : filtered.length === 0 ? (
-                <p
-                  className="pt-8 text-center text-xs"
-                  style={{ color: C.textMuted }}
-                >
-                  {search
-                    ? "No notes match your search."
-                    : "No notes yet — create one!"}
-                </p>
+                <div className="pt-6 text-center">
+                  <p className="text-xs" style={{ color: C.textMuted }}>
+                    {search
+                      ? "No notes match your search."
+                      : activeFolderId === "all"
+                        ? "No notes yet — create one!"
+                        : "No notes in this folder."}
+                  </p>
+                  {!search && activeFolderId !== "all" && (
+                    <button
+                      onClick={createNote}
+                      className="mx-auto mt-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150"
+                      style={{
+                        background: C.folderBg,
+                        color: C.folderDark,
+                        border: `1px solid ${C.folder}33`,
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add note here
+                    </button>
+                  )}
+                </div>
               ) : (
                 filtered.map((note, i) => (
                   <div
@@ -1251,6 +1937,11 @@ export default function Page() {
                       note={note}
                       active={selectedNote?.id === note.id}
                       compact={compact}
+                      folderName={
+                        activeFolderId === "all"
+                          ? getFolderName(note.folder_id)
+                          : undefined
+                      }
                       onClick={() => selectNote(note)}
                       onDelete={(e) => {
                         e.stopPropagation()
@@ -1283,7 +1974,58 @@ export default function Page() {
                       selectedNote.updated_at ?? selectedNote.created_at
                     )}
                   </span>
+
+                  {/* Folder breadcrumb pill */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowFolderMenu((v) => !v)}
+                      className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all duration-150"
+                      style={{
+                        background: selectedNote.folder_id
+                          ? C.folderBg
+                          : C.border + "88",
+                        color: selectedNote.folder_id
+                          ? C.folderDark
+                          : C.textMuted,
+                        border: `1px solid ${selectedNote.folder_id ? C.folder + "44" : C.border}`,
+                      }}
+                      onMouseEnter={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = C.folderBg
+                        ;(e.currentTarget as HTMLButtonElement).style.color =
+                          C.folderDark
+                      }}
+                      onMouseLeave={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = selectedNote.folder_id
+                          ? C.folderBg
+                          : C.border + "88"
+                        ;(e.currentTarget as HTMLButtonElement).style.color =
+                          selectedNote.folder_id ? C.folderDark : C.textMuted
+                      }}
+                      aria-label="Move to folder"
+                    >
+                      <Folder className="h-3 w-3" />
+                      <span>
+                        {getFolderName(selectedNote.folder_id) ?? "No folder"}
+                      </span>
+                      <ChevronDown className="h-2.5 w-2.5 opacity-60" />
+                    </button>
+                    {showFolderMenu && (
+                      <FolderAssignMenu
+                        folders={folders}
+                        currentFolderId={selectedNote.folder_id}
+                        onAssign={(folderId) =>
+                          assignNoteToFolder(selectedNote.id, folderId)
+                        }
+                        onClose={() => setShowFolderMenu(false)}
+                      />
+                    )}
+                  </div>
                 </div>
+
                 <div className="flex items-center gap-3">
                   {saving && (
                     <span
@@ -1374,9 +2116,8 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Editor body — flex column, no outer scroll */}
+              {/* Editor body */}
               <div className="flex flex-1 flex-col overflow-hidden">
-                {/* ── Fixed top: title + tags + divider ── */}
                 <div className="shrink-0 px-10 pt-6">
                   <input
                     value={title}
@@ -1385,7 +2126,6 @@ export default function Page() {
                     className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none"
                     style={{ color: C.textPrimary }}
                   />
-
                   {currentTags.length > 0 && (
                     <div className="flex items-center gap-2 pt-3">
                       <Tag className="h-3 w-3" style={{ color: C.textMuted }} />
@@ -1407,14 +2147,12 @@ export default function Page() {
                       })}
                     </div>
                   )}
-
                   <div
                     className="mt-5"
                     style={{ borderTop: `1px solid ${C.border}` }}
                   />
                 </div>
 
-                {/* ── Textarea — grows to fill remaining space, scrolls internally ── */}
                 <div className="min-h-0 flex-1 px-10">
                   <textarea
                     value={content}
@@ -1425,9 +2163,7 @@ export default function Page() {
                   />
                 </div>
 
-                {/* ── Fixed bottom: attachments + toolbar ── */}
                 <div className="shrink-0 px-10 pb-4">
-                  {/* Attachments loading */}
                   {attachmentsLoading && (
                     <div
                       className="mt-4 flex items-center gap-2 text-xs"
@@ -1440,8 +2176,6 @@ export default function Page() {
                       Loading attachments…
                     </div>
                   )}
-
-                  {/* Image gallery */}
                   {!attachmentsLoading && (
                     <ImageGallery
                       images={imageAttachments}
@@ -1449,8 +2183,6 @@ export default function Page() {
                       onOpenLightbox={(i) => setLightboxIndex(i)}
                     />
                   )}
-
-                  {/* File chips */}
                   {!attachmentsLoading && fileAttachments.length > 0 && (
                     <div className="mt-10">
                       <p
@@ -1475,7 +2207,6 @@ export default function Page() {
                     </div>
                   )}
 
-                  {/* Toolbar */}
                   <div
                     className="mt-4 flex items-center gap-1 pt-3"
                     style={{ borderTop: `1px solid ${C.border}` }}
@@ -1487,7 +2218,6 @@ export default function Page() {
                       className="hidden"
                       onChange={handleFileSelect}
                     />
-
                     <button
                       onClick={() => {
                         if (fileInputRef.current) {
@@ -1515,7 +2245,6 @@ export default function Page() {
                       <Paperclip className="h-3.5 w-3.5" />
                       Attach
                     </button>
-
                     <button
                       onClick={() => {
                         if (fileInputRef.current) {
@@ -1547,7 +2276,6 @@ export default function Page() {
                       <ImageIcon className="h-3.5 w-3.5" />
                       Image
                     </button>
-
                     {uploadedCount > 0 && (
                       <span
                         className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium"
@@ -1562,7 +2290,6 @@ export default function Page() {
               </div>
             </>
           ) : (
-            /* ── Empty state ── */
             <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
               <EmptyIllustration />
               <div>
