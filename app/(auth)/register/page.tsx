@@ -1,5 +1,10 @@
+import AnimatedSection from "@/components/animated-section"
 import Register from "@/components/auth/register"
 
 export default function RegisterPage() {
-  return <Register />
+  return (
+    <AnimatedSection>
+      <Register />
+    </AnimatedSection>
+  )
 }

@@ -1,11 +1,11 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { useState } from "react"
 import { createClient } from "@/supabase/client"
 import Link from "next/link"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
@@ -342,9 +342,16 @@ export function SignupForm({
               </div>
             )}
             <Field>
-              <Button className="w-full" type="submit" disabled={loading}>
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileTap={{ scale: 0.98 }}
+                whileHover={{ y: -1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-[#1a1a1a] px-4 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50"
+              >
                 {loading ? "Creating account..." : "Create Account"}
-              </Button>
+              </motion.button>
             </Field>
           </FieldGroup>
         </form>

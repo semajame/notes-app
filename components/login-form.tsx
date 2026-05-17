@@ -1,7 +1,7 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
@@ -269,9 +269,16 @@ export function LoginForm({
               </Field>
             )}
             <Field>
-              <Button type="submit" disabled={loading} className="bg-[#5B9FE8]">
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileTap={{ scale: 0.98 }}
+                whileHover={{ y: -1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-[#5B9FE8] px-4 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50"
+              >
                 {loading ? "Signing in..." : "Login"}
-              </Button>
+              </motion.button>
             </Field>
           </FieldGroup>
         </form>
