@@ -31,7 +31,7 @@ export default function Navbar() {
             <rect x="4" y="9" width="12" height="1.5" rx="0.75" fill="white" />
             <rect x="4" y="13" width="6" height="1.5" rx="0.75" fill="white" />
           </svg>
-          Notely
+          Notelyyyy
         </Link>
 
         {/* Center nav */}
@@ -53,22 +53,22 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="flex items-center gap-3">
-          <Link href="/login" legacyBehavior>
+          <Link href="/login" legacyBehavior className="cursor-pointer">
             <motion.a
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 24 }}
-              className="hidden text-sm font-medium text-[#1a1a1a] transition-opacity hover:opacity-70 md:block"
+              className="hidden cursor-pointer text-sm font-medium text-[#1a1a1a] transition-opacity hover:opacity-70 md:block"
             >
               Log In
             </motion.a>
           </Link>
 
-          <Link href="/register" legacyBehavior>
+          <Link href="/register" legacyBehavior className="cursor-pointer">
             <motion.a
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 24 }}
-              className="rounded-full bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#333]"
+              className="cursor-pointer rounded-full bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#333]"
             >
               Get Started
             </motion.a>

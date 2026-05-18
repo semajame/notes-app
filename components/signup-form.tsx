@@ -275,9 +275,9 @@ export function SignupForm({
     >
       <div className="flex flex-col justify-between gap-8 rounded-[1.75rem] bg-background/90 p-6 sm:p-8">
         <div className="space-y-5">
-          <div className="bg-amber/10 text-amber ring-amber/20 inline-flex h-12 w-12 items-center justify-center rounded-2xl ring-1">
+          {/* <div className="bg-amber/10 text-amber ring-amber/20 inline-flex h-12 w-12 items-center justify-center rounded-2xl ring-1">
             <GalleryVerticalEndIcon className="h-6 w-6" />
-          </div>
+          </div> */}
           <div className="space-y-3 text-center md:text-left">
             <p className="text-sm font-semibold tracking-[0.32em] text-primary uppercase">
               Create account
@@ -285,10 +285,6 @@ export function SignupForm({
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Start building with your workspace
             </h1>
-            <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-              Sign up once and enjoy a secure, polished experience with the same
-              bright, approachable style used across the app.
-            </p>
           </div>
         </div>
 
@@ -364,11 +360,11 @@ export function SignupForm({
             </Link>
           </FieldDescription>
           <p className="text-sm leading-6 text-muted-foreground">
-            By clicking continue, you agree to our{" "}
+            By clicking continue, you agree to our
             <a className="text-primary" href="#">
               Terms of Service
-            </a>{" "}
-            and{" "}
+            </a>
+            and
             <a className="text-primary" href="#">
               Privacy Policy
             </a>
@@ -385,10 +381,7 @@ export function SignupForm({
           <h2 className="text-3xl font-semibold text-foreground">
             Get started with confidence
           </h2>
-          <p className="mx-auto max-w-sm text-sm leading-6 text-muted-foreground">
-            A vibrant signup experience with the friendly colors and
-            motion-ready polish of the app.
-          </p>
+
           <div className="mx-auto w-full max-w-[320px]">
             <MascotLeft />
           </div>

@@ -357,7 +357,7 @@ export default function Hero() {
 
           {/* Center text */}
           <div className="flex flex-1 flex-col items-center gap-5 py-12 text-center">
-            <h1 className="text-[52px] leading-[1.08] font-bold tracking-tight text-[#1a1a1a] md:text-[64px]">
+            <h1 className="font-serif text-[52px] leading-[1.08] tracking-tight text-[#1a1a1a] md:text-[64px]">
               Your favorite
               <br />
               notes app.
@@ -368,32 +368,10 @@ export default function Hero() {
             </p>
             <div className="mt-2 flex items-center gap-3">
               <Link
-                href="#"
-                className="flex items-center gap-2 rounded-full bg-[#1a1a1a] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#333]"
+                href="/login"
+                className="flex items-center gap-2 rounded-full bg-[#3a7fd5] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#333]"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                >
-                  <path d="M11.182 9.4c-.02 1.78.926 2.627 1.636 3.273.19.173.355.323.475.46-.494.99-1.64 2.867-3.092 2.867-.432 0-.73-.114-1.042-.233-.326-.124-.666-.253-1.195-.253-.552 0-.912.135-1.258.265-.3.116-.587.226-.993.226-1.566 0-3.164-2.1-3.164-5.023C3.549 7.65 5.08 5.5 6.98 5.5c.515 0 .929.172 1.29.323.303.127.567.237.855.237.268 0 .528-.109.824-.233.385-.163.822-.348 1.368-.348.535 0 1.06.152 1.487.46-.437.363-.622.888-.622 1.461zm-1.39-5.45C9.34 4.57 8.668 5.5 7.5 5.5c-.033-.466.115-.997.408-1.45.458-.7 1.227-1.25 1.836-1.3.065.494-.091.99-.372 1.35-.006.007-.008.014-.014.02z" />
-                </svg>
-                Start for free
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-2 rounded-full border border-[#D0CBBD] px-5 py-3 text-sm font-semibold text-[#1a1a1a] transition-colors hover:bg-[#F0EDE4]"
-              >
-                <svg
-                  width="12"
-                  height="14"
-                  viewBox="0 0 12 14"
-                  fill="currentColor"
-                >
-                  <path d="M1 1l10 6L1 13V1z" />
-                </svg>
-                See how it works
+                Get Started
               </Link>
             </div>
           </div>

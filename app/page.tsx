@@ -15,10 +15,10 @@ export default function Home() {
         <Hero />
       </AnimatedSection>
       <AnimatedSection>
-        <Features />
+        <HowItWorks />
       </AnimatedSection>
       <AnimatedSection>
-        <HowItWorks />
+        <Features />
       </AnimatedSection>
       <AnimatedSection>
         <Testimonials />

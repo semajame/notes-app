@@ -52,7 +52,7 @@ export default function Testimonials() {
     <section className="overflow-hidden bg-[#FAFAF8] py-20">
       <div className="w-full px-6">
         <div className="mx-auto max-w-7xl text-center">
-          <h2 className="mb-3 text-[32px] font-bold text-[#1a1a1a]">
+          <h2 className="mb-3 font-serif text-[32px] text-[#1a1a1a] italic">
             Loved by note-takers everywhere.
           </h2>
           <p className="mb-12 text-[15px] text-[#777]">

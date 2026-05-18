@@ -226,12 +226,9 @@ export function LoginForm({
           <FieldGroup>
             <div className="flex flex-col items-center gap-2 text-center">
               <div className="flex flex-col items-center gap-2 font-medium">
-                <div className="flex size-8 items-center justify-center rounded-md">
-                  <GalleryVerticalEndIcon className="size-6" />
-                </div>
-                <span className="sr-only">Acme Inc.</span>
+                <span className="sr-only">Notelyyy.</span>
               </div>
-              <h1 className="text-xl font-bold">Welcome to Acme Inc.</h1>
+              <h1 className="text-xl font-bold">Welcome to Notelyyy.</h1>
               <FieldDescription>
                 Don&apos;t have an account?{" "}
                 <Link href="/register">Sign up</Link>
@@ -275,7 +272,7 @@ export function LoginForm({
                 whileTap={{ scale: 0.98 }}
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 22 }}
-                className="inline-flex w-full items-center justify-center rounded-lg bg-[#5B9FE8] px-4 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center rounded-lg bg-[#5B9FE8] px-2 py-2 text-sm font-semibold text-white transition-all disabled:opacity-50"
               >
                 {loading ? "Signing in..." : "Login"}
               </motion.button>

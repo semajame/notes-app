@@ -1,187 +1,44 @@
-// Phone mockup SVG screens
-function PhoneMockup({
-  children,
-  label,
-}: {
-  children: React.ReactNode
-  label: string
-}) {
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative h-[380px] w-[190px] overflow-hidden rounded-[36px] border-4 border-[#222] bg-[#1a1a1a] shadow-xl">
-        {/* Notch */}
-        <div className="absolute top-3 left-1/2 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-[#1a1a1a]" />
-        {/* Screen content */}
-        <div className="absolute inset-0 mt-10 overflow-hidden rounded-b-[32px] bg-[#FAFAF8]">
-          {children}
-        </div>
-      </div>
-      <div className="flex items-center gap-1.5 text-sm font-semibold text-[#1a1a1a]">
-        <div className="h-2 w-2 rounded-full bg-[#4CAF72]" />
-        {label}
-      </div>
-    </div>
-  )
-}
-
-function WriteScreen() {
-  return (
-    <div className="p-4 pt-6">
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-[#1a1a1a]">My Notes</p>
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1a1a1a]">
-          <span className="text-[10px] text-white">+</span>
-        </div>
-      </div>
-      {[
-        {
-          title: "Meeting notes",
-          time: "2m ago",
-          lines: 3,
-          color: "bg-[#5B9FE8]",
-        },
-        {
-          title: "Shopping list",
-          time: "1h ago",
-          lines: 2,
-          color: "bg-[#FF9F43]",
-        },
-        {
-          title: "Book ideas",
-          time: "Yesterday",
-          lines: 4,
-          color: "bg-[#4CAF72]",
-        },
-        { title: "Recipe draft", time: "Mon", lines: 2, color: "bg-[#FF6B6B]" },
-      ].map((note) => (
-        <div key={note.title} className="mb-3 flex items-start gap-2">
-          <div
-            className={`h-2 w-2 ${note.color} mt-1.5 flex-shrink-0 rounded-full`}
-          />
-          <div className="flex-1">
-            <div className="flex justify-between">
-              <p className="text-[10px] font-semibold text-[#1a1a1a]">
-                {note.title}
-              </p>
-              <p className="text-[9px] text-[#999]">{note.time}</p>
-            </div>
-            <div className="mt-1 flex flex-col gap-0.5">
-              {Array.from({ length: note.lines }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1.5 rounded-full bg-[#E8E6DF] ${i === note.lines - 1 ? "w-2/3" : "w-full"}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ReceiveScreen() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 p-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4CAF72]">
-        <svg
-          width="16"
-          height="16"
-          fill="none"
-          stroke="white"
-          strokeWidth="2.5"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M20 6L9 17l-5-5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-      <p className="text-[11px] font-semibold text-[#1a1a1a]">Share Note</p>
-      {/* QR-like grid */}
-      <div className="h-28 w-28 rounded-lg bg-[#1a1a1a] p-2">
-        <div className="grid h-full grid-cols-7 gap-0.5">
-          {Array.from({ length: 49 }).map((_, i) => (
-            <div
-              key={i}
-              className={`rounded-[1px] ${Math.random() > 0.5 ? "bg-white" : "bg-transparent"}`}
-            />
-          ))}
-        </div>
-      </div>
-      <p className="text-center text-[9px] text-[#888]">
-        Share with anyone
-        <br />
-        via link or QR code
-      </p>
-    </div>
-  )
-}
-
-function SearchScreen() {
-  return (
-    <div className="p-4 pt-6">
-      <p className="mb-3 text-[11px] font-semibold text-[#1a1a1a]">Search</p>
-      <div className="mb-4 flex items-center gap-2 rounded-xl bg-[#F0EDE4] px-3 py-2">
-        <svg
-          width="10"
-          height="10"
-          fill="none"
-          stroke="#999"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
-        </svg>
-        <span className="text-[9px] text-[#999]">recipe ideas…</span>
-      </div>
-      <div className="mb-2 text-[9px] font-medium text-[#888]">3 results</div>
-      {["Recipe draft", "Meal plan", "Grocery list"].map((r) => (
-        <div
-          key={r}
-          className="mb-2 rounded-xl border border-[#E8E6DF] bg-white p-2"
-        >
-          <p className="text-[10px] font-semibold text-[#1a1a1a]">{r}</p>
-          <div className="mt-1 h-1.5 w-3/4 rounded-full bg-[#E8E6DF]" />
-        </div>
-      ))}
-      {/* large number display like Family's swap screen */}
-      <div className="mt-4 text-center">
-        <p className="text-[28px] font-bold tracking-tight text-[#1a1a1a]">
-          24
-        </p>
-        <p className="text-[9px] text-[#888]">notes found</p>
-      </div>
-    </div>
-  )
-}
+import { FileText, CheckCircle2, Layout, PenTool } from "lucide-react"
 
 export default function HowItWorks() {
   return (
     <section id="how-it-works" className="bg-[#FAFAF8] py-20">
-      <div className="mx-auto max-w-5xl px-6">
-        <h2 className="mb-2 text-[32px] font-bold text-[#1a1a1a]">
-          Write, share, search.
-        </h2>
-        <p className="mb-14 text-[16px] text-[#777]">All in one place.</p>
+      <section className="bg-[#FAFAF8] px-6 pt-32 pb-20 text-center">
+        <span className="mb-6 block text-[10px] font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          Features
+        </span>
+        <h1 className="mb-6 font-serif text-5xl leading-tight italic md:text-6xl">
+          Everything you need, <br />
+          <span className="not-italic">nothing you don't.</span>
+        </h1>
+        <p className="mx-auto max-w-2xl text-lg leading-relaxed text-gray-500 md:text-xl">
+          Notelyyy brings together docs, and your tasks, into one calm,
+          beautiful workspace — built around how you actually think.
+        </p>
 
-        <div className="flex flex-col items-center justify-center gap-10 md:flex-row">
-          <PhoneMockup label="Write">
-            <WriteScreen />
-          </PhoneMockup>
-
-          <PhoneMockup label="Share">
-            <ReceiveScreen />
-          </PhoneMockup>
-
-          <PhoneMockup label="Search">
-            <SearchScreen />
-          </PhoneMockup>
+        {/* Feature Icons */}
+        <div className="mt-20 flex flex-wrap justify-center gap-8 md:gap-16">
+          {[
+            { icon: <FileText size={20} />, label: "Docs" },
+            { icon: <CheckCircle2 size={20} />, label: "Tasks" },
+            // { icon: <Calendar size={20} />, label: "Calendar" },
+            { icon: <Layout size={20} />, label: "Whiteboards" },
+            { icon: <PenTool size={20} />, label: "Daily Notes" },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="group flex cursor-pointer flex-col items-center gap-3"
+            >
+              <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-shadow group-hover:shadow-md">
+                {item.icon}
+              </div>
+              <span className="text-xs font-medium text-gray-600">
+                {item.label}
+              </span>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
     </section>
   )
 }
