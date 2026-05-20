@@ -78,9 +78,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
 
                 <div className="grid flex-1 text-start text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
+                  <span className="truncate font-medium">Notelyyyy</span>
 
-                  <span className="truncate text-xs">Enterprise</span>
+                  <span className="truncate text-xs">Your personal note app</span>
                 </div>
               </a>
             </SidebarMenuButton>
