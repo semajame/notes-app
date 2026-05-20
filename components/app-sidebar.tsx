@@ -16,7 +16,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import { TerminalSquareIcon, BookOpenIcon, TerminalIcon } from "lucide-react"
+import {
+  TerminalSquareIcon,
+  BookOpenIcon,
+  TerminalIcon,
+  BookAIcon,
+} from "lucide-react"
 
 const supabase = createClient()
 
@@ -32,6 +37,11 @@ const data = {
       title: "Notes",
       url: "/notes",
       icon: <TerminalSquareIcon />,
+    },
+    {
+      title: "Whiteboard",
+      url: "/whiteboard",
+      icon: <BookAIcon />,
     },
   ],
 }
@@ -80,7 +90,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-medium">Notelyyyy</span>
 
-                  <span className="truncate text-xs">Your personal note app</span>
+                  <span className="truncate text-xs">
+                    Your personal note app
+                  </span>
                 </div>
               </a>
             </SidebarMenuButton>

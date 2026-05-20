@@ -96,7 +96,10 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onSelect={handleLogout}>
+            <DropdownMenuItem
+              onSelect={handleLogout}
+              className="cursor-pointer"
+            >
               <LogOutIcon />
               Log out
             </DropdownMenuItem>

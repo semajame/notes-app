@@ -30,12 +30,21 @@ interface Folder {
   updated_at?: string
 }
 
+interface Whiteboard {
+  id: string
+  title: string
+  created_at: string
+  updated_at?: string
+}
+
 interface DashboardData {
   notes: Note[]
   folders: Folder[]
+  whiteboards: Whiteboard[]
 
   notesError: string | null
   foldersError: string | null
+  whiteboardsError: string | null
 }
 
 // ─── Data Fetching ─────────────────────────────────────────────────────────────
@@ -45,6 +54,7 @@ async function getDashboardData(
   const [
     { data: notes, error: notesError },
     { data: folders, error: foldersError },
+    { data: whiteboards, error: whiteboardsError },
   ] = await Promise.all([
     supabase
       .from("notes")
@@ -54,13 +64,19 @@ async function getDashboardData(
       .from("folders")
       .select("*")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("whiteboards")
+      .select("id,title,created_at,updated_at")
+      .order("updated_at", { ascending: false }),
   ])
 
   return {
     notes: notes ?? [],
     folders: folders ?? [],
+    whiteboards: whiteboards ?? [],
     notesError: notesError?.message ?? null,
     foldersError: foldersError?.message ?? null,
+    whiteboardsError: whiteboardsError?.message ?? null,
   }
 }
 

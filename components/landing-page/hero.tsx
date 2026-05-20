@@ -347,7 +347,7 @@ function MascotRight() {
 
 export default function Hero() {
   return (
-    <section className="flex flex-col items-center justify-center overflow-hidden bg-[#FAFAF8] pt-30">
+    <section className="flex flex-col items-center justify-center overflow-hidden bg-[#FAFAF8] pt-30 pb-20">
       <div className="mx-auto w-full max-w-7xl px-6">
         <div className="flex items-center justify-between gap-4">
           {/* Left mascot */}

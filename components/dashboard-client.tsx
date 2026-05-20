@@ -31,6 +31,13 @@ interface Note {
   updated_at?: string
 }
 
+interface Whiteboard {
+  id: string
+  title: string
+  created_at: string
+  updated_at?: string
+}
+
 interface Props {
   notes: Note[]
   folders: {
@@ -39,9 +46,11 @@ interface Props {
     created_at?: string
     updated_at?: string
   }[]
+  whiteboards: Whiteboard[]
 
   notesError: string | null
   foldersError: string | null
+  whiteboardsError: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -253,13 +262,23 @@ const axisTickStyle = { fontSize: 11, fill: "#999" }
 export function DashboardClient({
   notes,
   folders,
+  whiteboards,
 
   notesError,
   foldersError,
+  whiteboardsError,
 }: Props) {
   const notesByMonth = useMemo(() => groupByMonth(notes), [notes])
+  const whiteboardsByMonth = useMemo(
+    () => groupByMonth(whiteboards),
+    [whiteboards]
+  )
 
   const notesByDay = useMemo(() => groupByDay(notes), [notes])
+  const whiteboardsByDay = useMemo(
+    () => groupByDay(whiteboards),
+    [whiteboards]
+  )
 
   const recentNotes = useMemo(
     () =>
@@ -274,6 +293,10 @@ export function DashboardClient({
 
   const notesThisWeek = useMemo(() => createdThisWeek(notes), [notes])
   const notesToday = useMemo(() => createdToday(notes), [notes])
+  const whiteboardsThisWeek = useMemo(
+    () => createdThisWeek(whiteboards),
+    [whiteboards]
+  )
 
   const recentFolders = useMemo(
     () =>
@@ -287,6 +310,18 @@ export function DashboardClient({
     [folders]
   )
 
+  const recentWhiteboards = useMemo(
+    () =>
+      [...whiteboards]
+        .sort(
+          (a, b) =>
+            new Date(b.updated_at ?? b.created_at).getTime() -
+            new Date(a.updated_at ?? a.created_at).getTime()
+        )
+        .slice(0, 8),
+    [whiteboards]
+  )
+
   const lastNoteTime = useMemo(() => {
     if (!notes.length) return null
     return notes.reduce((latest, n) =>
@@ -296,6 +331,16 @@ export function DashboardClient({
         : latest
     )
   }, [notes])
+
+  const lastWhiteboardTime = useMemo(() => {
+    if (!whiteboards.length) return null
+    return whiteboards.reduce((latest, whiteboard) =>
+      new Date(whiteboard.updated_at ?? whiteboard.created_at) >
+      new Date(latest.updated_at ?? latest.created_at)
+        ? whiteboard
+        : latest
+    )
+  }, [whiteboards])
 
   // Stat card accent colors from the landing palette
   const statCards = [
@@ -328,6 +373,15 @@ export function DashboardClient({
       accent: "#F5C842",
       accentBg: "#F5C84220",
     },
+    {
+      label: "Whiteboards",
+      value: whiteboards.length.toLocaleString(),
+      sub: `${whiteboardsThisWeek} edited this week`,
+      positive: whiteboardsThisWeek > 0 ? true : null,
+      icon: <HardDrive className="h-5 w-5" />,
+      accent: "#6965DB",
+      accentBg: "#6965DB18",
+    },
   ]
 
   // Shared card style
@@ -343,9 +397,10 @@ export function DashboardClient({
       {/* ── Error banners ─────────────────────────────────────── */}
       {notesError && <ErrorBanner message={notesError} />}
       {foldersError && <ErrorBanner message={foldersError} />}
+      {whiteboardsError && <ErrorBanner message={whiteboardsError} />}
 
       {/* ── Stat cards ────────────────────────────────────────── */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card, i) => (
           <div
             key={card.label}
@@ -362,7 +417,7 @@ export function DashboardClient({
       </div>
 
       {/* ── Charts row ────────────────────────────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* Notes by month — bar */}
         <div
           className="animate-in p-5 fade-in slide-in-from-bottom-2"
@@ -485,11 +540,98 @@ export function DashboardClient({
             Just Updated
           </p>
         </div>
+
+        {/* Whiteboard activity */}
+        <div
+          className="animate-in p-5 fade-in slide-in-from-bottom-2"
+          style={{
+            ...cardStyle,
+            animationDelay: "420ms",
+            animationDuration: "300ms",
+            animationFillMode: "both",
+          }}
+        >
+          <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
+            Whiteboard Activity
+          </p>
+          <p className="mt-0.5 text-xs" style={{ color: "#888" }}>
+            Created over the last 6 months
+          </p>
+          <div className="mt-4 h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={whiteboardsByMonth} barSize={18}>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="#E8E6DF"
+                  strokeDasharray="3 3"
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={axisTickStyle}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={axisTickStyle}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                  width={24}
+                />
+                <Tooltip
+                  content={<ChartTooltip />}
+                  cursor={{ fill: "#F4F2EC" }}
+                />
+                <Bar
+                  dataKey="count"
+                  name="whiteboards"
+                  radius={[4, 4, 0, 0]}
+                  fill="#6965DB"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-3 grid grid-cols-7 gap-1">
+            {whiteboardsByDay.map((item) => (
+              <div key={item.label} className="min-w-0">
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{
+                    background:
+                      item.count > 0
+                        ? "linear-gradient(90deg, #6965DB, #9C36B5)"
+                        : "#E8E6DF",
+                    opacity: item.count > 0 ? 1 : 0.8,
+                  }}
+                />
+                <p
+                  className="mt-1 truncate text-center text-[10px]"
+                  style={{ color: "#999" }}
+                >
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+          {lastWhiteboardTime && (
+            <p
+              className="mt-3 flex items-center gap-1.5 text-xs"
+              style={{ color: "#999" }}
+            >
+              <Clock className="h-3 w-3" />
+              updated{" "}
+              {formatRelative(
+                lastWhiteboardTime.updated_at ??
+                  lastWhiteboardTime.created_at
+              )}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── Recent activity tables ─────────────────────────────── */}
       <div
-        className="grid animate-in gap-4 fade-in slide-in-from-bottom-2 lg:grid-cols-2"
+        className="grid animate-in gap-4 fade-in slide-in-from-bottom-2 xl:grid-cols-3"
         style={{
           animationDelay: "420ms",
           animationDuration: "300ms",
@@ -643,6 +785,85 @@ export function DashboardClient({
                     {folder.created_at
                       ? formatRelative(folder.created_at)
                       : "unknown"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Recent Whiteboards */}
+        <div style={cardStyle}>
+          <div
+            className="flex items-center justify-between px-5 py-3.5"
+            style={{ borderBottom: "1px solid #E8E6DF" }}
+          >
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
+                Recent Whiteboards
+              </p>
+              <p className="text-xs" style={{ color: "#888" }}>
+                Latest saved boards
+              </p>
+            </div>
+            <span
+              className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{ background: "#6965DB18", color: "#6965DB" }}
+            >
+              {whiteboards.length}
+            </span>
+          </div>
+
+          {whiteboardsError ? (
+            <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
+              Failed to load whiteboards.
+            </p>
+          ) : recentWhiteboards.length === 0 ? (
+            <p className="px-5 py-4 text-sm" style={{ color: "#888" }}>
+              No whiteboards yet.
+            </p>
+          ) : (
+            <ul>
+              {recentWhiteboards.map((whiteboard, i) => (
+                <li
+                  key={whiteboard.id}
+                  className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150"
+                  style={{
+                    borderBottom:
+                      i < recentWhiteboards.length - 1
+                        ? "1px solid #E8E6DF"
+                        : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLLIElement).style.background =
+                      "#F4F2EC"
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLLIElement).style.background =
+                      "transparent"
+                  }}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: "#6965DB18" }}
+                    >
+                      <HardDrive
+                        className="h-3.5 w-3.5"
+                        style={{ color: "#6965DB" }}
+                      />
+                    </div>
+                    <p
+                      className="truncate text-sm font-medium"
+                      style={{ color: "#1a1a1a" }}
+                    >
+                      {whiteboard.title || "Untitled whiteboard"}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs" style={{ color: "#999" }}>
+                    {formatRelative(
+                      whiteboard.updated_at ?? whiteboard.created_at
+                    )}
                   </span>
                 </li>
               ))}

@@ -35,7 +35,7 @@ export default function Navbar() {
         </Link>
 
         {/* Center nav */}
-        <div className="hidden items-center gap-6 text-sm font-medium text-[#555] md:flex">
+        {/* <div className="hidden items-center gap-6 text-sm font-medium text-[#555] md:flex">
           <button
             onClick={() => scrollToSection("features")}
             className="transition-colors hover:text-[#1a1a1a]"
@@ -49,7 +49,7 @@ export default function Navbar() {
           >
             How it Works
           </button>
-        </div>
+        </div> */}
 
         {/* CTA */}
         <div className="flex items-center gap-3">
