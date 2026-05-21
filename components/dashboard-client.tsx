@@ -256,6 +256,7 @@ function ChartTooltip({ active, payload, label }: any) {
 // ─── Shared chart axis style ──────────────────────────────────────────────────
 
 const axisTickStyle = { fontSize: 11, fill: "#999" }
+const RECENT_ITEMS_LIMIT = 4
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -275,10 +276,7 @@ export function DashboardClient({
   )
 
   const notesByDay = useMemo(() => groupByDay(notes), [notes])
-  const whiteboardsByDay = useMemo(
-    () => groupByDay(whiteboards),
-    [whiteboards]
-  )
+  const whiteboardsByDay = useMemo(() => groupByDay(whiteboards), [whiteboards])
 
   const recentNotes = useMemo(
     () =>
@@ -287,7 +285,7 @@ export function DashboardClient({
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )
-        .slice(0, 8),
+        .slice(0, RECENT_ITEMS_LIMIT),
     [notes]
   )
 
@@ -306,7 +304,7 @@ export function DashboardClient({
             new Date(b.created_at ?? "").getTime() -
             new Date(a.created_at ?? "").getTime()
         )
-        .slice(0, 8),
+        .slice(0, RECENT_ITEMS_LIMIT),
     [folders]
   )
 
@@ -318,7 +316,7 @@ export function DashboardClient({
             new Date(b.updated_at ?? b.created_at).getTime() -
             new Date(a.updated_at ?? a.created_at).getTime()
         )
-        .slice(0, 8),
+        .slice(0, RECENT_ITEMS_LIMIT),
     [whiteboards]
   )
 
@@ -393,7 +391,7 @@ export function DashboardClient({
   }
 
   return (
-    <div className="space-y-6" style={{ background: "#FAFAF8" }}>
+    <div className="space-y-6">
       {/* ── Error banners ─────────────────────────────────────── */}
       {notesError && <ErrorBanner message={notesError} />}
       {foldersError && <ErrorBanner message={foldersError} />}
@@ -474,7 +472,7 @@ export function DashboardClient({
               style={{ color: "#999" }}
             >
               <Clock className="h-3 w-3" />
-              updated{" "}
+              Updated{" "}
               {formatRelative(
                 lastNoteTime.updated_at ?? lastNoteTime.created_at
               )}
@@ -619,10 +617,9 @@ export function DashboardClient({
               style={{ color: "#999" }}
             >
               <Clock className="h-3 w-3" />
-              updated{" "}
+              Updated{" "}
               {formatRelative(
-                lastWhiteboardTime.updated_at ??
-                  lastWhiteboardTime.created_at
+                lastWhiteboardTime.updated_at ?? lastWhiteboardTime.created_at
               )}
             </p>
           )}

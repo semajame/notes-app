@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 
@@ -1250,6 +1251,7 @@ export default function Page() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveVersion = useRef(0)
   const [compact, setCompact] = useState(false)
 
   // Folder UI state
@@ -1282,7 +1284,7 @@ export default function Page() {
     }
   }, [])
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setLoading(true)
 
     const folderParam =
@@ -1296,12 +1298,43 @@ export default function Page() {
     console.log("Fetched notes:", data)
     setNotes(data)
     setLoading(false)
-  }
+  }, [activeFolderId])
+
+  const mergeNote = useCallback((note: Note) => {
+    setNotes((prev) => {
+      const exists = prev.some((item) => item.id === note.id)
+      if (!exists) return [note, ...prev]
+
+      return prev.map((item) =>
+        item.id === note.id ? { ...item, ...note } : item
+      )
+    })
+
+    setSelectedNote((prev) =>
+      prev?.id === note.id ? { ...prev, ...note } : prev
+    )
+  }, [])
+
+  const updateLocalNote = useCallback((id: string, changes: Partial<Note>) => {
+    setNotes((prev) =>
+      prev.map((note) => (note.id === id ? { ...note, ...changes } : note))
+    )
+
+    setSelectedNote((prev) =>
+      prev?.id === id ? { ...prev, ...changes } : prev
+    )
+  }, [])
 
   useEffect(() => {
     fetchFolders()
     fetchNotes()
-  }, [fetchFolders, activeFolderId])
+  }, [fetchFolders, fetchNotes])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    }
+  }, [])
 
   const fetchAttachments = useCallback(async (noteId: string) => {
     setAttachmentsLoading(true)
@@ -1465,9 +1498,8 @@ export default function Page() {
       return
     }
 
-    await fetchNotes()
-
     const newNote = created // ✅ FIXED
+    mergeNote(newNote)
 
     if (newNote?.id) {
       setSelectedNote(newNote)
@@ -1481,27 +1513,47 @@ export default function Page() {
   const triggerSave = useCallback(
     (id: string, t: string, c: string) => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
+      const version = ++saveVersion.current
+
       setSaving(true)
       saveTimer.current = setTimeout(async () => {
-        await fetch(`/api/notes/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: c }),
-        })
-        setSaving(false)
-        fetchNotes()
+        try {
+          const res = await fetch(`/api/notes/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: t, content: c }),
+          })
+
+          if (!res.ok) {
+            const data = await res.json().catch(() => null)
+            throw new Error(data?.error ?? "Failed to save note")
+          }
+
+          const saved = (await res.json()) as Note
+          if (version === saveVersion.current) mergeNote(saved)
+        } catch (error) {
+          console.error(error)
+        } finally {
+          if (version === saveVersion.current) setSaving(false)
+        }
       }, 800)
     },
-    [fetchNotes]
+    [mergeNote]
   )
 
   const handleTitleChange = (v: string) => {
     setTitle(v)
-    if (selectedNote) triggerSave(selectedNote.id, v, content)
+    if (selectedNote) {
+      updateLocalNote(selectedNote.id, { title: v })
+      triggerSave(selectedNote.id, v, content)
+    }
   }
   const handleContentChange = (v: string) => {
     setContent(v)
-    if (selectedNote) triggerSave(selectedNote.id, title, v)
+    if (selectedNote) {
+      updateLocalNote(selectedNote.id, { content: v })
+      triggerSave(selectedNote.id, title, v)
+    }
   }
 
   const deleteNote = async (id: string) => {
@@ -1574,25 +1626,29 @@ export default function Page() {
       )}
 
       <div
-        className="flex h-screen overflow-hidden rounded-lg"
+        className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg md:flex-row"
         style={{ background: C.pageBg }}
       >
         {/* ── Left panel ─────────────────────────────────────────── */}
         <aside
-          className="flex h-screen w-72 shrink-0 flex-col"
+          className="flex min-h-0 w-full shrink-0 flex-col border-b border-[#E8E6DF] md:h-full md:w-72 md:border-r md:border-b-0"
           style={{
             background: C.sidebarBg,
-            borderRight: `1px solid ${C.border}`,
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 pt-6 pb-3">
-            <h1
-              className="text-xl font-semibold tracking-tight"
-              style={{ color: C.textPrimary }}
-            >
-              Notes
-            </h1>
+          <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 sm:px-5 md:pt-5">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ms-1" />
+
+              <h1
+                className="text-xl font-semibold tracking-tight"
+                style={{ color: C.textPrimary }}
+              >
+                Notes
+              </h1>
+            </div>
+
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setCompact((v) => !v)}
@@ -1652,7 +1708,7 @@ export default function Page() {
           </div>
 
           {/* Search */}
-          <div className="px-3 pb-3">
+          <div className="px-3 pb-3 sm:px-4 md:px-3">
             <div
               className="flex items-center gap-2 rounded-xl px-3 py-2"
               style={{ background: C.cardBg, border: `1px solid ${C.border}` }}
@@ -1679,7 +1735,7 @@ export default function Page() {
           </div>
 
           {/* ── Folders section ── */}
-          <div className="shrink-0 px-3 pb-2">
+          <div className="shrink-0 px-3 pb-2 sm:px-4 md:px-3">
             {/* Section header */}
             <div className="mb-1 flex items-center justify-between">
               <span
@@ -1810,8 +1866,8 @@ export default function Page() {
           </div>
 
           {/* Note list */}
-          <div className="min-h-0 flex-1">
-            <div className="h-full space-y-1.5 overflow-y-auto px-3 pb-4">
+          <div className="min-h-0 flex-1 md:flex-1">
+            <div className="max-h-[34vh] space-y-1.5 overflow-y-auto px-3 pb-4 sm:px-4 md:h-full md:max-h-none md:px-3">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <div
@@ -1882,17 +1938,17 @@ export default function Page() {
 
         {/* ── Right panel — Editor ────────────────────────────────── */}
         <main
-          className="flex flex-1 flex-col overflow-hidden"
-          style={{ background: C.editorBg, borderRadius: "0 1rem 1rem 0" }}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          style={{ background: C.editorBg }}
         >
           {selectedNote ? (
             <>
               {/* Editor header */}
               <div
-                className="flex shrink-0 items-center justify-between px-8 py-4"
+                className="flex shrink-0 flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:px-8 md:py-4"
                 style={{ borderBottom: `1px solid ${C.border}` }}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <FileText className="h-4 w-4" style={{ color: C.blue }} />
                   <span className="rounded-full bg-[#3fb950] px-2 py-0.5 text-xs font-medium text-white">
                     {timeAgo(
@@ -1901,9 +1957,9 @@ export default function Page() {
                   </span>
 
                   {/* Folder breadcrumb pill */}
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <div
-                      className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all duration-150"
+                      className="flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all duration-150"
                       style={{
                         background: selectedNote.folder_id
                           ? C.folderBg
@@ -1915,14 +1971,14 @@ export default function Page() {
                       }}
                     >
                       <Folder className="h-3 w-3" />
-                      <span>
+                      <span className="truncate">
                         {getFolderName(selectedNote.folder_id) ?? "No folder"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-3 md:justify-end">
                   {saving && (
                     <span
                       className="flex animate-pulse items-center gap-1.5 text-xs"
@@ -2014,16 +2070,16 @@ export default function Page() {
 
               {/* Editor body */}
               <div className="flex flex-1 flex-col overflow-hidden">
-                <div className="shrink-0 px-10 pt-6">
+                <div className="shrink-0 px-4 pt-5 sm:px-6 md:px-10 md:pt-6">
                   <input
                     value={title}
                     onChange={(e) => handleTitleChange(e.target.value)}
                     placeholder="Note title"
-                    className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none"
+                    className="w-full bg-transparent text-2xl font-semibold tracking-tight outline-none sm:text-3xl"
                     style={{ color: C.textPrimary }}
                   />
                   {currentTags.length > 0 && (
-                    <div className="flex items-center gap-2 pt-3">
+                    <div className="flex flex-wrap items-center gap-2 pt-3">
                       <Tag className="h-3 w-3" style={{ color: C.textMuted }} />
                       {currentTags.map((tag) => {
                         const tc = tagColor(tag)
@@ -2049,17 +2105,17 @@ export default function Page() {
                   />
                 </div>
 
-                <div className="min-h-0 flex-1 px-10">
+                <div className="min-h-0 flex-1 px-4 sm:px-6 md:px-10">
                   <textarea
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                     placeholder={`Start writing…\n\nTip: use #tags to categorize your notes.`}
-                    className="mt-5 h-full w-full resize-none bg-transparent text-[15px] leading-[1.85] outline-none"
+                    className="mt-5 h-full w-full resize-none bg-transparent text-sm leading-[1.75] outline-none sm:text-[15px] sm:leading-[1.85]"
                     style={{ color: C.textPrimary }}
                   />
                 </div>
 
-                <div className="shrink-0 px-10 pb-4">
+                <div className="shrink-0 px-4 pb-4 sm:px-6 md:px-10">
                   {attachmentsLoading && (
                     <div
                       className="mt-4 flex items-center gap-2 text-xs"
@@ -2104,7 +2160,7 @@ export default function Page() {
                   )}
 
                   <div
-                    className="mt-4 flex items-center gap-1 pt-3"
+                    className="mt-4 flex flex-wrap items-center gap-1 pt-3"
                     style={{ borderTop: `1px solid ${C.border}` }}
                   >
                     <input
@@ -2174,7 +2230,7 @@ export default function Page() {
                     </button>
                     {uploadedCount > 0 && (
                       <span
-                        className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium"
+                        className="ml-0 rounded-full px-2 py-0.5 text-[10px] font-medium sm:ml-auto"
                         style={{ background: C.greenBg, color: C.green }}
                       >
                         {uploadedCount} attachment
@@ -2186,7 +2242,7 @@ export default function Page() {
               </div>
             </>
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8 text-center sm:px-8">
               <EmptyIllustration />
               <div>
                 <p
@@ -2201,7 +2257,7 @@ export default function Page() {
                 >
                   Select a note from the list, or create a new one.
                 </p>
-                <div className="mt-3 flex items-center justify-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                   {[
                     { tag: "#ideas", ...TAG_COLORS[0] },
                     { tag: "#to-do's", ...TAG_COLORS[2] },

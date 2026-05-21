@@ -1,9 +1,19 @@
 import { Geist, Geist_Mono, Noto_Serif } from "next/font/google"
+import type { Metadata } from "next"
 
 import "./globals.css"
 // import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { TooltipProvider } from "@/components/ui/tooltip"
+
+export const metadata: Metadata = {
+  title: "Notelyyyy - A web app notes",
+  icons: {
+    icon: "/assets/logo.png",
+    shortcut: "/assets/logo.png",
+    apple: "/assets/logo.png",
+  },
+}
 
 const notoSerifHeading = Noto_Serif({
   subsets: ["latin"],

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { createClient } from "@/supabase/client"
-
+import Image from "next/image"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 
@@ -16,12 +16,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import {
-  TerminalSquareIcon,
-  BookOpenIcon,
-  TerminalIcon,
-  BookAIcon,
-} from "lucide-react"
+import { FileTextIcon, LayoutDashboardIcon, PenToolIcon } from "lucide-react"
+import Link from "next/link"
 
 const supabase = createClient()
 
@@ -30,18 +26,18 @@ const data = {
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: <BookOpenIcon />,
+      icon: <LayoutDashboardIcon />,
       isActive: true,
     },
     {
       title: "Notes",
       url: "/notes",
-      icon: <TerminalSquareIcon />,
+      icon: <FileTextIcon />,
     },
     {
       title: "Whiteboard",
       url: "/whiteboard",
-      icon: <BookAIcon />,
+      icon: <PenToolIcon />,
     },
   ],
 }
@@ -82,9 +78,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <TerminalIcon className="size-4" />
+              <Link href="/dashboard" className="flex items-center gap-3">
+                <div className="relative size-8 overflow-hidden rounded-lg bg-sidebar-primary">
+                  <Image
+                    src="/assets/logo.png"
+                    alt="Notely logo"
+                    className="object-cover"
+                    width={50}
+                    height={50}
+                    priority
+                  />
                 </div>
 
                 <div className="grid flex-1 text-start text-sm leading-tight">
@@ -94,7 +97,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     Your personal note app
                   </span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

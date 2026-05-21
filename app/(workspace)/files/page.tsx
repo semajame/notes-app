@@ -40,8 +40,7 @@ export default function FilesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-[var(--bg)]">
-      {/* LEFT: FILE LIST */}
+    <div className="flex h-full bg-[var(--bg)]">
       <div className="w-1/3 border-r border-[var(--border)] p-4">
         <h2 className="mb-4 text-xl font-bold text-[var(--text)]">
           Files & PDFs
@@ -56,13 +55,12 @@ export default function FilesPage() {
               onClick={() => setSelectedFile(file)}
               className="rounded-lg bg-[var(--bg2)] p-3 text-left text-[var(--text)] hover:bg-[var(--bg3)]"
             >
-              📄 {file.name}
+              {file.name}
             </button>
           ))}
         </div>
       </div>
 
-      {/* RIGHT: VIEWER */}
       <div className="flex-1 p-6">
         {selectedFile ? (
           <>
@@ -70,7 +68,6 @@ export default function FilesPage() {
               {selectedFile.name}
             </h3>
 
-            {/* PDF / file viewer */}
             {selectedFile.file_type.includes("pdf") ? (
               <iframe
                 src={selectedFile.file_url}
@@ -80,6 +77,7 @@ export default function FilesPage() {
               <img
                 src={selectedFile.file_url}
                 className="max-h-full max-w-full rounded-lg"
+                alt={selectedFile.name}
               />
             )}
           </>

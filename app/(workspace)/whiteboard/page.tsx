@@ -44,6 +44,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 type Tool =
   | "select"
@@ -1087,8 +1089,11 @@ export default function Whiteboard() {
   const gridSize = 32 * zoom
 
   return (
-    <main className="relative h-[calc(100vh-1rem)] min-h-[640px] overflow-hidden bg-[#f8f7f2] text-neutral-950">
-      <div id="whiteboard-board-area" className="absolute inset-0">
+    <main className="relative flex h-full min-h-[640px] overflow-hidden bg-[#f8f7f2] text-neutral-950">
+      <div
+        id="whiteboard-board-area"
+        className="relative min-w-0 flex-1 overflow-hidden"
+      >
         <div
           ref={wrapRef}
           className="absolute inset-0 touch-none overflow-hidden"
@@ -1115,7 +1120,7 @@ export default function Whiteboard() {
         </div>
       </div>
 
-      <div className="absolute top-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-lg border border-neutral-200 bg-white/95 p-1 shadow-[0_8px_24px_rgb(0_0_0_/_0.12)] backdrop-blur">
+      <div className="absolute top-4 left-[calc(50%+9rem)] z-20 flex -translate-x-1/2 items-center gap-1 rounded-lg border border-neutral-200 bg-white/95 p-1 shadow-[0_8px_24px_rgb(0_0_0_/_0.12)] backdrop-blur">
         {TOOLS.map((item) => (
           <ToolButton
             key={item.id}
@@ -1128,10 +1133,15 @@ export default function Whiteboard() {
         ))}
       </div>
 
-      <aside className="absolute top-4 left-4 z-20 w-[220px] rounded-lg border border-neutral-200 bg-white/95 p-3 shadow-[0_8px_24px_rgb(0_0_0_/_0.10)] backdrop-blur">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-          <Highlighter className="h-4 w-4 text-[#6965db]" />
-          Whiteboard
+      <aside
+        id="whiteboard-sidebar"
+        className="order-first flex h-full w-72 shrink-0 flex-col overflow-y-auto rounded-lg border-r border-neutral-200 bg-white p-4"
+      >
+        <div className="">
+          <div className="text-md mb-3 flex items-center gap-2 font-semibold">
+            <SidebarTrigger className="-ms-1" />
+            Whiteboard
+          </div>
         </div>
 
         <label className="mb-3 block">
@@ -1149,36 +1159,24 @@ export default function Whiteboard() {
           />
         </label>
 
-        <button
-          type="button"
-          onClick={saveBoard}
-          disabled={saveState === "saving"}
-          className="mb-3 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6965db] px-3 text-sm font-semibold text-white transition hover:bg-[#5b57c8] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          <Save className="h-4 w-4" />
-          {saveState === "saving" ? "Saving" : "Save"}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => void deleteBoard()}
-          className="mb-3 flex h-9 w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-        >
-          <Trash2 className="h-4 w-4" />
-          Delete
-        </button>
-
-        <div
-          className={[
-            "mb-4 rounded-md border px-2 py-1.5 text-xs",
-            saveState === "error"
-              ? "border-red-200 bg-red-50 text-red-700"
-              : saveState === "saved"
-                ? "border-green-200 bg-green-50 text-green-700"
-                : "border-neutral-200 bg-neutral-50 text-neutral-500",
-          ].join(" ")}
-        >
-          {saveMessage}
+        <div className="flex items-center justify-between">
+          <Button
+            type="button"
+            onClick={saveBoard}
+            disabled={saveState === "saving"}
+            className="mb-3 flex items-center justify-center rounded-md bg-[#6965db] px-3 text-sm font-semibold text-white transition hover:bg-[#5b57c8] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <Save className="h-4 w-4" />
+            {saveState === "saving" ? "Saving" : "Save"}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void deleteBoard()}
+            className="mb-3 flex items-center justify-center rounded-md border border-red-200 bg-red-50 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </Button>
         </div>
 
         <div className="mb-4">
@@ -1319,9 +1317,22 @@ export default function Whiteboard() {
             </div>
           </div>
         </div>
+
+        <div
+          className={[
+            "mt-5 mb-4 w-full rounded-full border px-4 py-1.5 text-center text-xs",
+            saveState === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : saveState === "saved"
+                ? "border-green-200 bg-green-50 text-green-700"
+                : "border-neutral-200 bg-neutral-50 text-neutral-500",
+          ].join(" ")}
+        >
+          {saveMessage}
+        </div>
       </aside>
 
-      <div className="absolute right-4 bottom-4 z-20 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white/95 p-1 shadow-[0_8px_24px_rgb(0_0_0_/_0.10)] backdrop-blur">
+      <div className="absolute right-4 bottom-2 z-20 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white/95 p-1 shadow-[0_8px_24px_rgb(0_0_0_/_0.10)] backdrop-blur">
         <ToolButton
           icon={ZoomOut}
           label="Zoom out"
@@ -1341,7 +1352,7 @@ export default function Whiteboard() {
         />
       </div>
 
-      <div className="absolute bottom-8 left-4 z-20 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white/95 p-1 shadow-[0_8px_24px_rgb(0_0_0_/_0.10)] backdrop-blur">
+      <div className="absolute bottom-2 left-[calc(18rem+1rem)] z-20 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white/95 p-1 shadow-[0_8px_24px_rgb(0_0_0_/_0.10)] backdrop-blur">
         <ToolButton icon={Undo2} label="Undo" active={false} onClick={undo} />
         <ToolButton icon={Redo2} label="Redo" active={false} onClick={redo} />
         <ToolButton
@@ -1403,7 +1414,7 @@ export default function Whiteboard() {
             onKeyDown={(event) => {
               if (event.key === "Enter") confirmTextDialog()
             }}
-            className="h-10 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition focus:border-[#6965db] focus:ring-2 focus:ring-[#e9e8ff]"
+            className="h-10 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 transition outline-none focus:border-[#6965db] focus:ring-2 focus:ring-[#e9e8ff]"
             autoFocus
           />
           <AlertDialogFooter>
